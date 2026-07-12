@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "566716127028",
+    "project_id": "votmari-blood-foundation",
+    "storage_bucket": "votmari-blood-foundation.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:566716127028:android:bbe9b9732ab00e4cdff761",
+        "android_client_info": {
+          "package_name": "com.votmari.bloodfoundation"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBd9LhwPRBTG52tfw0qqI6b_z71mQfT-wU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
