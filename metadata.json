@@ -1,0 +1,6 @@
+{
+  "name": "Votmari Blood Foundation",
+  "description": "Professional, Modern, Responsive Blood Donation Mobile App for Votmari Blood Foundation",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
