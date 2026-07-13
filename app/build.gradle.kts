@@ -27,7 +27,8 @@ android {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")      keyAlias = "upload"
+      storePassword = System.getenv("STORE_PASSWORD")      
+      keyAlias = "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
@@ -67,7 +68,7 @@ secrets {
 }
 
 googleServices {
-  missingGoogleServicesStrate0y = MissingGoogleServicesStrategy.WARN
+  missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN
 }
 
 
@@ -123,5 +124,5 @@ dependencies {
   androidTestImplementation(libs.androidx.runner)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
-  "ksp"(libs.androidx.room.compiler)
-  "ksp"(libs.moshi.kotlin.codegen)
+  ksp(libs.androidx.room.compiler)
+  ksp(libs.moshi.kotlin.codegen)
