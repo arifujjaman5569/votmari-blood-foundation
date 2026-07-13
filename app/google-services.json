@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:566716127028:android:6e0868c1aca39f20dff761",
+        "android_client_info": {
+          "package_name": "com.aistudio.votmaribloodfoundation.vbf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBd9LhwPRBTG52tfw0qqI6b_z71mQfT-wU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:566716127028:android:bbe9b9732ab00e4cdff761",
         "android_client_info": {
           "package_name": "com.votmari.bloodfoundation"
