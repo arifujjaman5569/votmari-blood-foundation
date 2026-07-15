@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.R
+import com.votmari.bloodfoundation.R
 import com.example.data.*
 import com.example.ui.BloodViewModel
 import com.example.ui.theme.*
