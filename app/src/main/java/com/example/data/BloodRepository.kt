@@ -1,4 +1,4 @@
-package com.example.data
+package com.votmari.bloodfoundation.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull

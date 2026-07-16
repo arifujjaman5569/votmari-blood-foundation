@@ -1,4 +1,4 @@
-package com.example.ui.theme
+package com.votmari.bloodfoundation.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.background

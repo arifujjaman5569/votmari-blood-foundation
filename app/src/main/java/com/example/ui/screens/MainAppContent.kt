@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.votmari.bloodfoundation.ui.screens
 
 import android.content.Intent
 import android.net.Uri
@@ -39,9 +39,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.votmari.bloodfoundation.R
-import com.example.data.*
-import com.example.ui.BloodViewModel
-import com.example.ui.theme.*
+import com.votmari.bloodfoundation.data.*
+import com.votmari.bloodfoundation.ui.BloodViewModel
+import com.votmari.bloodfoundation.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat

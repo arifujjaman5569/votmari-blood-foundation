@@ -1,9 +1,9 @@
-package com.example.ui
+package com.votmari.bloodfoundation.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.*
+import com.votmari.bloodfoundation.data.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
