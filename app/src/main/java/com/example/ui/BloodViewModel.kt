@@ -13,9 +13,6 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val database = AppDatabase.getDatabase(application)
         repository = BloodRepository(database.dao())
-        viewModelScope.launch {
-            repository.initializeMockDataIfNeeded()
-        }
     }
 
     // --- Active State flows ---
