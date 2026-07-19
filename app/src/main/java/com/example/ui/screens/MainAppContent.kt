@@ -508,10 +508,6 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                lineHeight = 16.sp
-            )
         }
     }
 }
