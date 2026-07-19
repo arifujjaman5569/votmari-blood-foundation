@@ -43,6 +43,7 @@ import com.votmari.bloodfoundation.R
 import com.votmari.bloodfoundation.data.*
 import com.votmari.bloodfoundation.ui.BloodViewModel
 import com.votmari.bloodfoundation.ui.theme.*
+import com.votmari.bloodfoundation.ui.screens.profile.EditProfileScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -202,6 +203,16 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                 "request" -> RequestBloodScreen(viewModel)
                 "leaderboard" -> LeaderboardScreen(viewModel)
                 "profile" -> ProfileScreen(viewModel)
+                "edit_profile" -> EditProfileScreen(
+    user = viewModel.currentUser.value!!,
+    onSave = {
+        viewModel.showToast("প্রোফাইল সফলভাবে সংরক্ষণ করা হয়েছে")
+        viewModel.setScreen("profile")
+    },
+    onBack = {
+        viewModel.setScreen("profile")
+    }
+)
                 "extras" -> ExtraToolsScreen(viewModel)
                 "dashboard" -> AdminDashboardScreen(viewModel)
             }
@@ -1795,7 +1806,7 @@ fun ProfileScreen(viewModel: BloodViewModel) {
 item {
     OutlinedButton(
         onClick = {
-            viewModel.showToast("প্রোফাইল সম্পাদনা ফিচার শীঘ্রই আসছে")
+            viewModel.setScreen("edit_profile")
         },
         modifier = Modifier
             .fillMaxWidth()
