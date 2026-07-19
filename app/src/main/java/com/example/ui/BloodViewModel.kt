@@ -114,26 +114,6 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loginAsDemoRole(role: String) {
-        viewModelScope.launch {
-            // Find a seeded user of this role, or login with temporary mock
-            val demoMobile = when (role) {
-                "Super Admin" -> "01700000001"
-                "Admin" -> "01700000002"
-                "Moderator" -> "01700000003"
-                "Volunteer" -> "01700000004"
-                else -> "01755555551"
-            }
-            val user = repository.getDonorByMobile(demoMobile)
-            if (user != null) {
-                _currentUser.value = user
-                _activeRole.value = user.role
-                _currentScreen.value = "home"
-                showToast("ডেমো লগইন: ${user.fullName} (${user.role})")
-            }
-        }
-    }
-
     fun overrideRoleForTesting(newRole: String) {
         _activeRole.value = newRole
         showToast("টেস্টিং মোড: রোল পরিবর্তন করে '$newRole' করা হয়েছে।")
