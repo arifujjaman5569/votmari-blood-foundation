@@ -342,30 +342,6 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Demo testing fast login
-            Text(
-                text = "টেস্টিং / রিভিউকারীদের জন্য বিশেষ ডেমো লগইন:",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                listOf("Super Admin", "Admin", "Volunteer", "Donor").forEach { role ->
-                    AssistChip(
-                        onClick = { viewModel.loginAsDemoRole(role) },
-                        label = { Text(role, fontSize = 10.sp) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                        )
-                    )
-                }
-            }
         } else if (isLoginMode) {
             LoginWidget(
                 onBack = { isLoginMode = false },
@@ -500,7 +476,7 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = {
-                                viewModel.loginAsDemoRole("Donor")
+                                viewModel.showToast("Google Login শীঘ্রই আসছে")
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             modifier = Modifier.fillMaxWidth()
@@ -521,9 +497,7 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                         if (mobileNumber.isBlank() && loginMethod == "Mobile OTP") {
                             viewModel.showToast("অনুগ্রহ করে মোবাইল নম্বর প্রদান করুন!")
                         } else {
-                            // Seed testing bypass
-                            val targetMobile = if (mobileNumber.isNotBlank()) mobileNumber else "01755555551"
-                            onLoginSubmit(targetMobile)
+                            onLoginSubmit(mobileNumber)
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp).testTag("login_submit_button"),
@@ -534,8 +508,6 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "টেস্ট করতে Seed নম্বরের যেকোনো একটি ব্যবহার করুন:\n• Super Admin: 01700000001\n• Admin: 01700000002\n• Moderator: 01700000003\n• Volunteer: 01700000004\n• Donor: 01755555551",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 lineHeight = 16.sp
