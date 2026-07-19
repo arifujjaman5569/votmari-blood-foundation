@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -419,7 +420,7 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                     OutlinedTextField(
                         value = mobileNumber,
                         onValueChange = { mobileNumber = it },
-                        label = { Text("মোবাইল নম্বর (যেমন: 01755555551)") },
+                        label = { Text("মোবাইল নম্বর") },
                         leadingIcon = { Icon(Icons.Default.Phone, contentDescription = "Phone") },
                         modifier = Modifier.fillMaxWidth().testTag("login_mobile_input"),
                         shape = RoundedCornerShape(12.dp),
@@ -1791,7 +1792,22 @@ fun ProfileScreen(viewModel: BloodViewModel) {
                 }
             }
         }
-
+item {
+    OutlinedButton(
+        onClick = {
+            viewModel.showToast("প্রোফাইল সম্পাদনা ফিচার শীঘ্রই আসছে")
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp)
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(Icons.Default.Edit, contentDescription = "Edit")
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("প্রোফাইল সম্পাদনা করুন")
+    }
+}
         // Action: View Certificate
         item {
             Button(
@@ -2166,10 +2182,10 @@ fun ExtraToolsScreen(viewModel: BloodViewModel) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("যোগাযোগ ও সামাজিক মাধ্যম", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(10.dp))
-                            ContactRow(Icons.Filled.Call, "পরিচালক (হটলাইন)", "01700000001")
-                            ContactRow(Icons.Filled.Chat, "হোয়াটসঅ্যাপ হেল্পলাইন", "01700000001")
-                            ContactRow(Icons.Filled.Email, "অফিসিয়াল জিমেইল", "contact@votmariblood.org")
-                            ContactRow(Icons.Filled.Language, "ওয়েবসাইট লিংক", "www.votmariblood.org")
+                            ContactRow(Icons.Filled.Call, "পরিচালক (হটলাইন)", "01773050197")
+                            ContactRow(Icons.Filled.Chat, "হোয়াটসঅ্যাপ হেল্পলাইন", "01865002060")
+                            ContactRow(Icons.Filled.Email, "অফিসিয়াল জিমেইল", "bhotmaribloodfundetionbbf@gmail.com")
+                            ContactRow(Icons.Filled.Language, "ওয়েবসাইট", "শীঘ্রই যুক্ত করা হবে")
                         }
                     }
                 }
