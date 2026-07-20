@@ -205,10 +205,9 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                 "profile" -> ProfileScreen(viewModel)
                 "edit_profile" -> EditProfileScreen(
     user = viewModel.currentUser.value!!,
-    onSave = {
-        viewModel.showToast("প্রোফাইল সফলভাবে সংরক্ষণ করা হয়েছে")
-        viewModel.setScreen("profile")
-    },
+    onSave = { updatedUser ->
+    viewModel.saveProfile(updatedUser)
+},
     onBack = {
         viewModel.setScreen("profile")
     }
