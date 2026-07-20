@@ -123,31 +123,14 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         showToast("সফলভাবে লগআউট করা হয়েছে।")
     }
     
-                    showToast("এই নম্বরে কোনো একাউন্ট পাওয়া যায়নি! অনুগ্রহ করে রেজিস্ট্রেশন করুন।")
-            }
-        }
+    fun saveProfile(updatedUser: DonorEntity) {
+    viewModelScope.launch {
+        repository.updateDonor(updatedUser)
+        _currentUser.value = updatedUser
+        showToast("প্রোফাইল সফলভাবে আপডেট হয়েছে")
+        _currentScreen.value = "profile"
     }
-
-    fun overrideRoleForTesting(newRole: String) {
-        _activeRole.value = newRole
-        showToast("টেস্টিং মোড: রোল পরিবর্তন করে '$newRole' করা হয়েছে।")
-    }
-
-    fun logout() {
-        _currentUser.value = null
-        _activeRole.value = "Donor"
-        _currentScreen.value = "onboarding"
-        showToast("সফলভাবে লগআউট করা হয়েছে।")
-    }
-
-    fun register(donor: DonorEntity) {
-        viewModelScope.launch {
-            val existing = repository.getDonorByMobile(donor.mobileNumber)
-            if (existing != null) {
-                showToast("এই মোবাইল নাম্বার দিয়ে ইতিমধ্যে একটি একাউন্ট খোলা রয়েছে!")
-                return@launch
-            }
-
+}
     fun register(donor: DonorEntity) {
         viewModelScope.launch {
             val existing = repository.getDonorByMobile(donor.mobileNumber)
