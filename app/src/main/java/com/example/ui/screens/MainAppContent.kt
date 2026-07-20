@@ -42,6 +42,9 @@ import coil.compose.AsyncImage
 import com.votmari.bloodfoundation.R
 import com.votmari.bloodfoundation.data.*
 import com.votmari.bloodfoundation.ui.BloodViewModel
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthProvider
 import com.votmari.bloodfoundation.ui.theme.*
 import com.votmari.bloodfoundation.ui.screens.profile.EditProfileScreen
 import kotlinx.coroutines.delay
@@ -375,8 +378,13 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: BloodViewModel) {
+    val context = LocalContext.current
+    val activity = context as android.app.Activity
     var mobileNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var otpCode by remember { mutableStateOf("") }
+    var otpSent by remember { mutableStateOf(false) }
+    var verificationId by remember { mutableStateOf("") }
     var loginMethod by remember { mutableStateOf("Mobile OTP") } // "Mobile OTP", "Email", "Google"
 
     Card(
@@ -438,10 +446,53 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+    onClick = {
+        if (mobileNumber.isBlank()) {
+            viewModel.showToast("মোবাইল নম্বর লিখুন")
+        } else {
+    viewModel.sendOtp(
+        activity = activity,
+        phone = "+88$mobileNumber",
+        callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+
+            override fun onVerificationCompleted(
+                credential: PhoneAuthCredential
+            ) {
+                viewModel.showToast("OTP স্বয়ংক্রিয়ভাবে যাচাই হয়েছে")
+            }
+
+            override fun onVerificationFailed(
+                e: FirebaseException
+            ) {
+                viewModel.showToast(e.message ?: "OTP পাঠানো ব্যর্থ হয়েছে")
+            }
+
+            override fun onCodeSent(
+                id: String,
+                token: PhoneAuthProvider.ForceResendingToken
+            ) {
+                verificationId = id
+                otpSent = true
+                viewModel.showToast("OTP পাঠানো হয়েছে")
+            }
+
+            override fun onCodeAutoRetrievalTimeOut(id: String) {
+    verificationId = id
+}
+        }
+    )
+}
+    },
+    modifier = Modifier.fillMaxWidth()
+) {
+    Text(if (otpSent) "OTP পুনরায় পাঠান" else "OTP পাঠান")
+}
+Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("OTP কোড (যেকোনো কিছু লিখুন)") },
+                        value = otpCode,
+                        onValueChange = { otpCode = it },
+                        label = { Text("OTP কোড") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "OTP") },
                         modifier = Modifier.fillMaxWidth().testTag("login_otp_input"),
                         shape = RoundedCornerShape(12.dp),
@@ -504,19 +555,40 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
 
             if (loginMethod != "Google") {
                 Button(
-                    onClick = {
-                        if (mobileNumber.isBlank() && loginMethod == "Mobile OTP") {
-                            viewModel.showToast("অনুগ্রহ করে মোবাইল নম্বর প্রদান করুন!")
-                        } else {
-                            onLoginSubmit(mobileNumber)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(48.dp).testTag("login_submit_button"),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("লগইন", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+    onClick = {
+        if (mobileNumber.isBlank() && loginMethod == "Mobile OTP") {
+            viewModel.showToast("অনুগ্রহ করে মোবাইল নম্বর প্রদান করুন!")
+        } else {
+            if (loginMethod == "Mobile OTP") {
+
+                if (verificationId.isBlank()) {
+                    viewModel.showToast("আগে OTP পাঠান")
+                } else if (otpCode.isBlank()) {
+                    viewModel.showToast("OTP লিখুন")
+                } else {
+                    viewModel.verifyOtp(
+                        verificationId = verificationId,
+                        otp = otpCode
+                    )
                 }
+
+            } else {
+                onLoginSubmit(mobileNumber)
             }
+        }
+    },
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(48.dp)
+        .testTag("login_submit_button"),
+    shape = RoundedCornerShape(12.dp)
+) {
+    Text(
+        "লগইন",
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold
+    )
+}
 
             Spacer(modifier = Modifier.height(16.dp))
         }

@@ -3,6 +3,8 @@ package com.votmari.bloodfoundation.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.votmari.bloodfoundation.auth.FirebasePhoneAuth
 import com.votmari.bloodfoundation.data.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -10,6 +12,7 @@ import kotlinx.coroutines.launch
 class BloodViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: BloodRepository
+    private val auth = FirebaseAuth.getInstance()
     init {
         val database = AppDatabase.getDatabase(application)
         repository = BloodRepository(database.dao())
@@ -123,6 +126,37 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         showToast("সফলভাবে লগআউট করা হয়েছে।")
     }
     
+    fun sendOtp(
+    activity: android.app.Activity,
+    phone: String,
+    callbacks: com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
+) {
+    FirebasePhoneAuth.sendOtp(
+        activity = activity,
+        phone = phone,
+        callbacks = callbacks
+    )
+}
+
+fun verifyOtp(
+    verificationId: String,
+    otp: String,
+    onSuccess: () -> Unit = {}
+) {
+    val credential = FirebasePhoneAuth.getCredential(verificationId, otp)
+
+    FirebasePhoneAuth.signIn(
+        credential = credential,
+        onSuccess = {
+            showToast("লগইন সফল হয়েছে")
+            _currentScreen.value = "home"
+            onSuccess()
+        },
+        onError = {
+            showToast(it)
+        }
+    )
+}
     fun saveProfile(updatedUser: DonorEntity) {
     viewModelScope.launch {
         repository.updateDonor(updatedUser)
