@@ -367,7 +367,7 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
         } else {
             RegisterWidget(
                 onBack = { isRegisterMode = false },
-                onRegisterSubmit = { donor ->
+                onRegisterSubmit = { donor: DonorEntity ->
                     viewModel.register(donor)
                 }
             )
