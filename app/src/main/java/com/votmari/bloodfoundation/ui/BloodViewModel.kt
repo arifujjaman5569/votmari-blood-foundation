@@ -3,6 +3,8 @@ package com.votmari.bloodfoundation.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.votmari.bloodfoundation.auth.FirebasePhoneAuth
 import com.votmari.bloodfoundation.data.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -10,12 +12,10 @@ import kotlinx.coroutines.launch
 class BloodViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: BloodRepository
+    private val auth = FirebaseAuth.getInstance()
     init {
         val database = AppDatabase.getDatabase(application)
         repository = BloodRepository(database.dao())
-        viewModelScope.launch {
-            repository.initializeMockDataIfNeeded()
-        }
     }
 
     // --- Active State flows ---
@@ -114,26 +114,6 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loginAsDemoRole(role: String) {
-        viewModelScope.launch {
-            // Find a seeded user of this role, or login with temporary mock
-            val demoMobile = when (role) {
-                "Super Admin" -> "01700000001"
-                "Admin" -> "01700000002"
-                "Moderator" -> "01700000003"
-                "Volunteer" -> "01700000004"
-                else -> "01755555551"
-            }
-            val user = repository.getDonorByMobile(demoMobile)
-            if (user != null) {
-                _currentUser.value = user
-                _activeRole.value = user.role
-                _currentScreen.value = "home"
-                showToast("ডেমো লগইন: ${user.fullName} (${user.role})")
-            }
-        }
-    }
-
     fun overrideRoleForTesting(newRole: String) {
         _activeRole.value = newRole
         showToast("টেস্টিং মোড: রোল পরিবর্তন করে '$newRole' করা হয়েছে।")
@@ -145,7 +125,46 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         _currentScreen.value = "onboarding"
         showToast("সফলভাবে লগআউট করা হয়েছে।")
     }
+    
+    fun sendOtp(
+    activity: android.app.Activity,
+    phone: String,
+    callbacks: com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
+) {
+    FirebasePhoneAuth.sendOtp(
+        activity = activity,
+        phone = phone,
+        callbacks = callbacks
+    )
+}
 
+fun verifyOtp(
+    verificationId: String,
+    otp: String,
+    onSuccess: () -> Unit = {}
+) {
+    val credential = FirebasePhoneAuth.getCredential(verificationId, otp)
+
+    FirebasePhoneAuth.signIn(
+        credential = credential,
+        onSuccess = {
+            showToast("লগইন সফল হয়েছে")
+            _currentScreen.value = "home"
+            onSuccess()
+        },
+        onError = {
+            showToast(it)
+        }
+    )
+}
+    fun saveProfile(updatedUser: DonorEntity) {
+    viewModelScope.launch {
+        repository.updateDonor(updatedUser)
+        _currentUser.value = updatedUser
+        showToast("প্রোফাইল সফলভাবে আপডেট হয়েছে")
+        _currentScreen.value = "profile"
+    }
+}
     fun register(donor: DonorEntity) {
         viewModelScope.launch {
             val existing = repository.getDonorByMobile(donor.mobileNumber)
