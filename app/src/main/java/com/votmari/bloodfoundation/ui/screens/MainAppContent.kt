@@ -1869,7 +1869,15 @@ fun ProfileScreen(viewModel: BloodViewModel) {
 item {
     OutlinedButton(
         onClick = {
-                "edit_profile" -> Text("Edit Profile")
+            viewModel.setScreen("edit_profile")
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(Icons.Default.Edit, contentDescription = null)
         Spacer(modifier = Modifier.width(8.dp))
         Text("প্রোফাইল সম্পাদনা করুন")
     }
