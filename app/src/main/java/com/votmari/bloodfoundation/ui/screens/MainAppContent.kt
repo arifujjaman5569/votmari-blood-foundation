@@ -206,15 +206,7 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                 "request" -> RequestBloodScreen(viewModel)
                 "leaderboard" -> LeaderboardScreen(viewModel)
                 "profile" -> ProfileScreen(viewModel)
-                "edit_profile" -> EditProfileScreen(
-    user = viewModel.currentUser.value!!,
-    onSave = { updatedUser ->
-    viewModel.saveProfile(updatedUser)
-},
-    onBack = {
-        viewModel.setScreen("profile")
-    }
-)
+                "edit_profile" -> Text("Edit Profile")
                 "extras" -> ExtraToolsScreen(viewModel)
                 "dashboard" -> AdminDashboardScreen(viewModel)
             }
@@ -1877,15 +1869,7 @@ fun ProfileScreen(viewModel: BloodViewModel) {
 item {
     OutlinedButton(
         onClick = {
-            viewModel.setScreen("edit_profile")
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp)
-            .height(48.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                "edit_profile" -> Text("Edit Profile")
         Spacer(modifier = Modifier.width(8.dp))
         Text("প্রোফাইল সম্পাদনা করুন")
     }
