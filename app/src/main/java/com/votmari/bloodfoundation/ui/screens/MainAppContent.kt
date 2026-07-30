@@ -206,7 +206,15 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                 "request" -> RequestBloodScreen(viewModel)
                 "leaderboard" -> LeaderboardScreen(viewModel)
                 "profile" -> ProfileScreen(viewModel)
-                "edit_profile" -> Text("Edit Profile")
+                "edit_profile" -> EditProfileScreen(
+    user = viewModel.currentUser.value!!,
+    onSave = { updatedUser ->
+    viewModel.saveProfile(updatedUser)
+},
+    onBack = {
+        viewModel.setScreen("profile")
+    }
+)
                 "extras" -> ExtraToolsScreen(viewModel)
                 "dashboard" -> AdminDashboardScreen(viewModel)
             }
@@ -443,38 +451,38 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
         if (mobileNumber.isBlank()) {
             viewModel.showToast("মোবাইল নম্বর লিখুন")
         } else {
-            viewModel.sendOtp(
-                activity = activity,
-                phone = "+88$mobileNumber",
-                callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+    viewModel.sendOtp(
+        activity = activity,
+        phone = "+88$mobileNumber",
+        callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
-                    override fun onVerificationCompleted(
-                        credential: PhoneAuthCredential
-                    ) {
-                        viewModel.showToast("OTP স্বয়ংক্রিয়ভাবে যাচাই হয়েছে")
-                    }
+            override fun onVerificationCompleted(
+                credential: PhoneAuthCredential
+            ) {
+                viewModel.showToast("OTP স্বয়ংক্রিয়ভাবে যাচাই হয়েছে")
+            }
 
-                    override fun onVerificationFailed(
-                        e: FirebaseException
-                    ) {
-                        viewModel.showToast(e.message ?: "OTP পাঠানো ব্যর্থ হয়েছে")
-                    }
+            override fun onVerificationFailed(
+                e: FirebaseException
+            ) {
+                viewModel.showToast(e.message ?: "OTP পাঠানো ব্যর্থ হয়েছে")
+            }
 
-                    override fun onCodeSent(
-                        id: String,
-                        token: PhoneAuthProvider.ForceResendingToken
-                    ) {
-                        verificationId = id
-                        otpSent = true
-                        viewModel.showToast("OTP পাঠানো হয়েছে")
-                    }
+            override fun onCodeSent(
+                id: String,
+                token: PhoneAuthProvider.ForceResendingToken
+            ) {
+                verificationId = id
+                otpSent = true
+                viewModel.showToast("OTP পাঠানো হয়েছে")
+            }
 
-                    override fun onCodeAutoRetrievalTimeOut(id: String) {
-                        verificationId = id
-                    }
-                }
-            )
+            override fun onCodeAutoRetrievalTimeOut(id: String) {
+    verificationId = id
+}
         }
+    )
+}
     },
     modifier = Modifier.fillMaxWidth()
 ) {
@@ -1873,11 +1881,11 @@ item {
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
+            .padding(top = 12.dp)
             .height(48.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Icon(Icons.Default.Edit, contentDescription = null)
+        Icon(Icons.Default.Edit, contentDescription = "Edit")
         Spacer(modifier = Modifier.width(8.dp))
         Text("প্রোফাইল সম্পাদনা করুন")
     }
@@ -2869,5 +2877,3 @@ fun StatCard(label: String, value: String, tintColor: Color, modifier: Modifier 
         }
     }
 }
-
-// trigger rebuild
