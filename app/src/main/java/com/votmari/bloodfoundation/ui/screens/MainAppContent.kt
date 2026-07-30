@@ -2858,7 +2858,6 @@ fun AdminDashboardScreen(viewModel: BloodViewModel) {
         }
     }
 }
-}
 
 @Composable
 fun StatCard(label: String, value: String, tintColor: Color, modifier: Modifier = Modifier) {
