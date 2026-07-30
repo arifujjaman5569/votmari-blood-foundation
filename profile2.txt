@@ -1,0 +1,131 @@
+
+                item {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ToolCard("BMI ক্যালকুলেটর", Icons.Filled.Calculate, MaterialTheme.colorScheme.primary, Modifier.weight(1f)) {
+                            selectedTool = "bmi"
+                        }
+                        ToolCard("যোগ্যতা যাচাই", Icons.Filled.VerifiedUser, SuccessGreen, Modifier.weight(1f)) {
+                            selectedTool = "eligibility"
+                        }
+                    }
+                }
+
+                item {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ToolCard("আশেপাশের ডোনার", Icons.Filled.MyLocation, PendingOrange, Modifier.weight(1f)) {
+                            selectedTool = "nearby"
+                        }
+                        ToolCard("লাইভ চ্যাট সাহায্য", Icons.Filled.Forum, MaterialTheme.colorScheme.primary, Modifier.weight(1f)) {
+                            selectedTool = "chat"
+                        }
+                    }
+                }
+
+                // SOS Button Card
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("🚨 জরুরী সংকেত (SOS Alert Button)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("মুহূর্তেই রক্তদাতার কাছে জরুরী পুশ এলার্ট পাঠাতে ক্লিক করুন।", fontSize = 11.sp, textAlign = TextAlign.Center)
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            var selectedSOSGroup by remember { mutableStateOf("O+") }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf("A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-").forEach { bg ->
+                                    FilterChip(
+                                        selected = selectedSOSGroup == bg,
+                                        onClick = { selectedSOSGroup = bg },
+                                        label = { Text(bg) }
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Button(
+                                onClick = { viewModel.triggerSOS(selectedSOSGroup) },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Icon(Icons.Filled.NotificationImportant, contentDescription = "SOS", tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("SOS জরুরী এলার্ট পাঠান", fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+                }
+
+                // General Contact Board
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("যোগাযোগ ও সামাজিক মাধ্যম", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(10.dp))
+                            ContactRow(Icons.Filled.Call, "পরিচালক (হটলাইন)", "01773050197")
+                            ContactRow(Icons.Filled.Chat, "হোয়াটসঅ্যাপ হেল্পলাইন", "01865002060")
+                            ContactRow(Icons.Filled.Email, "অফিসিয়াল জিমেইল", "bhotmaribloodfundetionbbf@gmail.com")
+                            ContactRow(Icons.Filled.Language, "ওয়েবসাইট", "শীঘ্রই যুক্ত করা হবে")
+                        }
+                    }
+                }
+            }
+        }
+        "bmi" -> {
+            BMICalculatorWidget(viewModel) { selectedTool = "home" }
+        }
+        "eligibility" -> {
+            EligibilityCheckerWidget(viewModel) { selectedTool = "home" }
+        }
+        "nearby" -> {
+            NearbyDonorsWidget(viewModel) { selectedTool = "home" }
+        }
+        "chat" -> {
+            LiveChatWidget(viewModel, messages) { selectedTool = "home" }
+        }
+    }
+}
+
+@Composable
+fun ToolCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tintColor: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(
+        modifier = modifier
+            .height(100.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(icon, contentDescription = title, tint = tintColor, modifier = Modifier.size(28.dp))
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+fun ContactRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = label, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)

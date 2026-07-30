@@ -106,12 +106,7 @@ dependencies {
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
-  // implementation(libs.firebase.appcheck.recaptcha)
-
-  implementation("com.google.firebase:firebase-auth")
-  implementation("com.google.firebase:firebase-firestore")
-  implementation("com.google.firebase:firebase-storage")
-
+  implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
