@@ -383,6 +383,8 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
     var mobileNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var emailPass by remember { mutableStateOf("") }
     var otpSent by remember { mutableStateOf(false) }
     var verificationId by remember { mutableStateOf("") }
     var loginMethod by remember { mutableStateOf("Mobile OTP") } // "Mobile OTP", "Email", "Google"
@@ -501,8 +503,6 @@ Spacer(modifier = Modifier.height(12.dp))
                     )
                 }
                 "Email" -> {
-                    var email by remember { mutableStateOf("") }
-                    var emailPass by remember { mutableStateOf("") }
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
