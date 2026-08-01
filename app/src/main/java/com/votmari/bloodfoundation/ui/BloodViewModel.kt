@@ -12,11 +12,22 @@ import kotlinx.coroutines.launch
 class BloodViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: BloodRepository
+    private val prefs =
+    application.getSharedPreferences("login_session", android.content.Context.MODE_PRIVATE)
     private val auth = FirebaseAuth.getInstance()
     init {
-        val database = AppDatabase.getDatabase(application)
-        repository = BloodRepository(database.dao())
+    val database = AppDatabase.getDatabase(application)
+    repository = BloodRepository(database.dao())
+
+    val savedRole = prefs.getString("role", null)
+
+    if (savedRole != null) {
+        _activeRole.value = savedRole
+        _currentScreen.value =
+            if (savedRole == "Super Admin") "dashboard"
+            else "home"
     }
+}
 
     // --- Active State flows ---
     val allDonors: StateFlow<List<DonorEntity>> = repository.allDonors
@@ -107,6 +118,10 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
                 _currentUser.value = user
                 _activeRole.value = user.role
                 _currentScreen.value = "home"
+                prefs.edit()
+        .putBoolean("logged_in", true)
+        .putString("role", user.role)
+        .apply()
                 showToast("স্বাগতম, ${user.fullName}! আপনি ${user.role} হিসেবে লগইন করেছেন।")
             } else {
                 showToast("এই নম্বরে কোনো একাউন্ট পাওয়া যায়নি! অনুগ্রহ করে রেজিস্ট্রেশন করুন।")
@@ -120,6 +135,8 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun logout() {
+        prefs.edit().clear().apply()
+
         _currentUser.value = null
         _activeRole.value = "Donor"
         _currentScreen.value = "onboarding"
@@ -150,6 +167,10 @@ fun verifyOtp(
         onSuccess = {
             showToast("লগইন সফল হয়েছে")
             _currentScreen.value = "home"
+            prefs.edit()
+    .putBoolean("logged_in", true)
+    .putString("role", "Donor")
+    .apply()
             onSuccess()
         },
         onError = {
@@ -165,6 +186,10 @@ fun loginWithEmail(
         .addOnSuccessListener {
             _activeRole.value = "Super Admin"
             _currentScreen.value = "dashboard"
+            prefs.edit()
+    .putBoolean("logged_in", true)
+    .putString("role", "Super Admin")
+    .apply()
             showToast("সুপার অ্যাডমিন লগইন সফল হয়েছে")
         }
         .addOnFailureListener {
@@ -190,6 +215,10 @@ fun loginWithEmail(
             _currentUser.value = donor
             _activeRole.value = donor.role
             _currentScreen.value = "home"
+            prefs.edit()
+    .putBoolean("logged_in", true)
+    .putString("role", donor.role)
+    .apply()
             showToast("রেজিস্ট্রেশন সফল হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষা করুন।")
         }
     }
