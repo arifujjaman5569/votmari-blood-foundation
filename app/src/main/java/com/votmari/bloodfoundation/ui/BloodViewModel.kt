@@ -23,9 +23,20 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     init {
-        val database = AppDatabase.getDatabase(application)
-        repository = BloodRepository(database.dao())
+    val database = AppDatabase.getDatabase(application)
+    repository = BloodRepository(database.dao())
+
+    val savedRole = prefs.getString("role", null)
+
+    if (prefs.getBoolean("logged_in", false) && savedRole != null) {
+        _activeRole.value = savedRole
+        _currentScreen.value =
+            if (savedRole == "Super Admin")
+                "dashboard"
+            else
+                "home"
     }
+}
 
     // ----------------------------
     // Repository Flows
@@ -102,20 +113,6 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     val currentScreen =
         _currentScreen.asStateFlow()
 
-    init {
-        val savedRole = prefs.getString("role", null)
-
-        if (prefs.getBoolean("logged_in", false) && savedRole != null) {
-
-            _activeRole.value = savedRole
-
-            _currentScreen.value =
-                if (savedRole == "Super Admin")
-                    "dashboard"
-                else
-                    "home"
-        }
-    }
 
     // ----------------------------
     // Search Filters
