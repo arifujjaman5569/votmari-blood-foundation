@@ -15,19 +15,6 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs =
     application.getSharedPreferences("login_session", android.content.Context.MODE_PRIVATE)
     private val auth = FirebaseAuth.getInstance()
-    init {
-    val database = AppDatabase.getDatabase(application)
-    repository = BloodRepository(database.dao())
-
-    val savedRole = prefs.getString("role", null)
-
-    if (savedRole != null) {
-        _activeRole.value = savedRole
-        _currentScreen.value =
-            if (savedRole == "Super Admin") "dashboard"
-            else "home"
-    }
-}
 
     // --- Active State flows ---
     val allDonors: StateFlow<List<DonorEntity>> = repository.allDonors
@@ -61,6 +48,19 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     // --- Navigation ---
     private val _currentScreen = MutableStateFlow("onboarding")
     val currentScreen: StateFlow<String> = _currentScreen.asStateFlow()
+    init {
+    val database = AppDatabase.getDatabase(application)
+    repository = BloodRepository(database.dao())
+
+    val savedRole = prefs.getString("role", null)
+
+    if (savedRole != null) {
+        _activeRole.value = savedRole
+        _currentScreen.value =
+            if (savedRole == "Super Admin") "dashboard"
+            else "home"
+    }
+}
 
     // --- Search Filters ---
     private val _searchBloodGroup = MutableStateFlow("All")
