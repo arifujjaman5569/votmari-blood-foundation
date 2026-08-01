@@ -157,6 +157,20 @@ fun verifyOtp(
         }
     )
 }
+fun loginWithEmail(
+    email: String,
+    password: String
+) {
+    auth.signInWithEmailAndPassword(email, password)
+        .addOnSuccessListener {
+            _activeRole.value = "Super Admin"
+            _currentScreen.value = "dashboard"
+            showToast("সুপার অ্যাডমিন লগইন সফল হয়েছে")
+        }
+        .addOnFailureListener {
+            showToast(it.message ?: "ইমেইল বা পাসওয়ার্ড ভুল")
+        }
+}
     fun saveProfile(updatedUser: DonorEntity) {
     viewModelScope.launch {
         repository.updateDonor(updatedUser)

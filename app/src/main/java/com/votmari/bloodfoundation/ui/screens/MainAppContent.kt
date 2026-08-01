@@ -572,9 +572,16 @@ Spacer(modifier = Modifier.height(12.dp))
                     )
                 }
 
-            } else {
-                onLoginSubmit(mobileNumber)
-            }
+            } else if (loginMethod == "Email") {
+    if (email.isBlank() || emailPass.isBlank()) {
+        viewModel.showToast("ইমেইল এবং পাসওয়ার্ড লিখুন")
+    } else {
+        viewModel.loginWithEmail(
+            email = email,
+            password = emailPass
+        )
+    }
+}
         }
     },
     modifier = Modifier
