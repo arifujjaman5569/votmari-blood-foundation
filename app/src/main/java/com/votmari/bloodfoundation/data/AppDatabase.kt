@@ -42,7 +42,7 @@ interface BloodFoundationDao {
     suspend fun insertBloodRequest(request: BloodRequestEntity)
 
     @Query("UPDATE blood_requests SET isApproved = :approved, status = :status WHERE id = :id")
-    suspend fun updateRequestStatus(id: Int, approved: Boolean, status: String)
+    suspend fun updateRequestStatus(id: String, approved: Boolean, status: String)
 
     // --- Donation History ---
     @Query("SELECT * FROM donation_history ORDER BY id DESC")

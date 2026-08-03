@@ -46,7 +46,7 @@ class BloodRepository(private val dao: BloodFoundationDao) {
         .add(request)
         .await()
 }
-    suspend fun updateRequestStatus(id: Int, approved: Boolean, status: String) =
+    suspend fun updateRequestStatus(id: String, approved: Boolean, status: String) =
         dao.updateRequestStatus(id, approved, status)
 
     suspend fun addDonationHistory(donation: DonationHistoryEntity) {

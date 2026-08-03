@@ -216,21 +216,21 @@ fun loginWithEmail(
         }
     }
 
-    fun approveBloodRequest(id: Int) {
+    fun approveBloodRequest(id: String) {
         viewModelScope.launch {
             repository.updateRequestStatus(id, true, "Approved")
             showToast("রক্তের আবেদন অ্যাপ্রুভ করা হয়েছে।")
         }
     }
 
-    fun rejectBloodRequest(id: Int) {
+    fun rejectBloodRequest(id: String) {
         viewModelScope.launch {
             repository.updateRequestStatus(id, false, "Cancelled")
             showToast("রক্তের আবেদন বাতিল করা হয়েছে।")
         }
     }
 
-    fun completeBloodRequest(id: Int) {
+    fun completeBloodRequest(id: String) {
         viewModelScope.launch {
             repository.updateRequestStatus(id, true, "Completed")
             showToast("রক্তের আবেদন সম্পন্ন হিসেবে চিহ্নিত করা হয়েছে।")
