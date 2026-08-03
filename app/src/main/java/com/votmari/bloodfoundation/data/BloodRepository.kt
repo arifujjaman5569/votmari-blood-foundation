@@ -1,9 +1,12 @@
 package com.votmari.bloodfoundation.data
 
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 
 class BloodRepository(private val dao: BloodFoundationDao) {
+                      private val firestore = FirebaseFirestore.getInstance()
 
     // --- Flow streams ---
     val allDonors: Flow<List<DonorEntity>> = dao.getAllDonors()
@@ -23,7 +26,14 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     fun getAllDonationHistory(): Flow<List<DonationHistoryEntity>> = dao.getAllDonationHistory()
 
     // --- Write actions ---
-    suspend fun registerDonor(donor: DonorEntity) = dao.insertDonor(donor)
+    suspend fun registerDonor(donor: DonorEntity) {
+    dao.insertDonor(donor)
+
+    firestore.collection("donors")
+        .document(donor.mobileNumber)
+        .set(donor)
+        .await()
+}
     suspend fun updateDonor(donor: DonorEntity) = dao.updateDonor(donor)
     suspend fun approveDonor(mobile: String, approved: Boolean) = dao.approveDonor(mobile, approved)
     suspend fun updateDonorRole(mobile: String, role: String) = dao.updateDonorRole(mobile, role)
