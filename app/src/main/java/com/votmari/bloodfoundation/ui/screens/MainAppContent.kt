@@ -803,6 +803,13 @@ fun HomeScreen(viewModel: BloodViewModel) {
                         modifier = Modifier.padding(top = 2.dp)
                     )
 
+                    Text(
+                        text = "রক্তের পরিমাণ: ${urgentRequest?.bloodQuantity ?: "--"}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
