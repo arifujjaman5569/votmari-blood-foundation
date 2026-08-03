@@ -719,6 +719,7 @@ fun HomeScreen(viewModel: BloodViewModel) {
     val notices by viewModel.allNotices.collectAsState()
     val events by viewModel.allEvents.collectAsState()
     val donorsList by viewModel.allDonors.collectAsState()
+    val requestsList by viewModel.allBloodRequests.collectAsState()
     val activeRole by viewModel.activeRole.collectAsState()
 
     LazyColumn(
@@ -981,7 +982,7 @@ fun HomeScreen(viewModel: BloodViewModel) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "৩৫২+",
+                        text = requestsList.count { it.status == "Completed" }.toString(),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFF334155) // text-slate-700
