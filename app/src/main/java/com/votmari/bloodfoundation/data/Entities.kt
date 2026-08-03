@@ -33,7 +33,7 @@ data class DonorEntity(
 
 @Entity(tableName = "blood_requests")
 data class BloodRequestEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey val id: String = "",
     val patientName: String,
     val bloodGroup: String,
     val bloodQuantity: String,
