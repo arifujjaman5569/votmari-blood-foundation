@@ -39,7 +39,13 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     suspend fun updateDonorRole(mobile: String, role: String) = dao.updateDonorRole(mobile, role)
     suspend fun deleteDonor(mobile: String) = dao.deleteDonor(mobile)
 
-    suspend fun submitBloodRequest(request: BloodRequestEntity) = dao.insertBloodRequest(request)
+    suspend fun submitBloodRequest(request: BloodRequestEntity) {
+    dao.insertBloodRequest(request)
+
+    firestore.collection("blood_requests")
+        .add(request)
+        .await()
+}
     suspend fun updateRequestStatus(id: Int, approved: Boolean, status: String) =
         dao.updateRequestStatus(id, approved, status)
 
