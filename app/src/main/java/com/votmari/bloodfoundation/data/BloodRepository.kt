@@ -40,10 +40,15 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     suspend fun deleteDonor(mobile: String) = dao.deleteDonor(mobile)
 
     suspend fun submitBloodRequest(request: BloodRequestEntity) {
-    dao.insertBloodRequest(request)
+    val requestId = java.util.UUID.randomUUID().toString()
+
+    val firestoreRequest = request.copy(id = requestId)
+
+    dao.insertBloodRequest(firestoreRequest)
 
     firestore.collection("blood_requests")
-        .add(request)
+        .document(requestId)
+        .set(firestoreRequest)
         .await()
 }
     suspend fun updateRequestStatus(id: String, approved: Boolean, status: String) =
