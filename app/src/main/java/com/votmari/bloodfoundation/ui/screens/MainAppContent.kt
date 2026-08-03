@@ -720,6 +720,9 @@ fun HomeScreen(viewModel: BloodViewModel) {
     val events by viewModel.allEvents.collectAsState()
     val donorsList by viewModel.allDonors.collectAsState()
     val requestsList by viewModel.allBloodRequests.collectAsState()
+    val urgentRequest = requestsList.firstOrNull {
+    it.status == "Approved" || it.status == "Pending"
+}
     val activeRole by viewModel.activeRole.collectAsState()
 
     LazyColumn(
@@ -781,13 +784,13 @@ fun HomeScreen(viewModel: BloodViewModel) {
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "O+ পজিটিভ রক্তের প্রয়োজন",
+                        text = "${urgentRequest?.bloodGroup ?: "--"} রক্তের প্রয়োজন",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "রংপুর মেডিকেল কলেজ হাসপাতাল (RMCH)",
+                        text = urgentRequest?.hospitalName ?: "এই মুহূর্তে কোনো রক্তের অনুরোধ নেই",
                         fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.9f),
                         modifier = Modifier.padding(top = 2.dp)
