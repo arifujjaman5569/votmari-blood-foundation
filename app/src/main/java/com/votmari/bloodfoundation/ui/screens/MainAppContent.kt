@@ -796,6 +796,13 @@ fun HomeScreen(viewModel: BloodViewModel) {
                         modifier = Modifier.padding(top = 2.dp)
                     )
 
+                    Text(
+                        text = "রোগী: ${urgentRequest?.patientName ?: "--"}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
