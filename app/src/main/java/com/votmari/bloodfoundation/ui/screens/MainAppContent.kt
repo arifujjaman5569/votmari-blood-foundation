@@ -718,6 +718,7 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
 fun HomeScreen(viewModel: BloodViewModel) {
     val notices by viewModel.allNotices.collectAsState()
     val events by viewModel.allEvents.collectAsState()
+    val donorsList by viewModel.allDonors.collectAsState()
     val activeRole by viewModel.activeRole.collectAsState()
 
     LazyColumn(
@@ -948,7 +949,7 @@ fun HomeScreen(viewModel: BloodViewModel) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "১,২৪৮",
+                        text = donorsList.size.toString(),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFFE11D48) // text-rose-600
