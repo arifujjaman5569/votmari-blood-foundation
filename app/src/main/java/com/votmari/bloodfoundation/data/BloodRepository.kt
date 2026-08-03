@@ -62,7 +62,13 @@ class BloodRepository(private val dao: BloodFoundationDao) {
         }
     }
 
-    suspend fun publishNotice(notice: NoticeEntity) = dao.insertNotice(notice)
+    suspend fun publishNotice(notice: NoticeEntity) {
+    dao.insertNotice(notice)
+
+    firestore.collection("notices")
+        .add(notice)
+        .await()
+}
     suspend fun deleteNotice(id: Int) = dao.deleteNotice(id)
 
     suspend fun createEvent(event: EventEntity) = dao.insertEvent(event)
