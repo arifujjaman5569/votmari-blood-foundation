@@ -95,49 +95,6 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                         }
                     },
                     actions = {
-                        // Display active role badge and click to simulate other roles!
-                        var showRolePicker by remember { mutableStateOf(false) }
-                        AssistChip(
-                            onClick = { showRolePicker = true },
-                            label = { Text(activeRole, fontWeight = FontWeight.Bold) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                labelColor = MaterialTheme.colorScheme.primary,
-                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                            )
-                        )
-
-                        if (showRolePicker) {
-                            AlertDialog(
-                                onDismissRequest = { showRolePicker = false },
-                                title = { Text("রোল টেস্টিং মোড (Select Role)", fontSize = 16.sp) },
-                                text = {
-                                    Column {
-                                        Text("অ্যাপের ৪ ধরনের ইউজার রোল সরাসরি টেস্ট করতে নিচে যেকোনো একটি নির্বাচন করুন:", fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
-                                        val roles = listOf("Super Admin", "Admin", "Moderator", "Volunteer", "Donor")
-                                        roles.forEach { role ->
-                                            Button(
-                                                onClick = {
-                                                    viewModel.overrideRoleForTesting(role)
-                                                    showRolePicker = false
-                                                },
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (activeRole == role) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                                    contentColor = if (activeRole == role) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            ) {
-                                                Text(role)
-                                            }
-                                        }
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { showRolePicker = false }) {
-                                        Text("বন্ধ করুন")
-                                    }
-                                }
-                            )
-                        }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
