@@ -810,6 +810,13 @@ fun HomeScreen(viewModel: BloodViewModel) {
                         modifier = Modifier.padding(top = 2.dp)
                     )
 
+                    Text(
+                        text = "প্রয়োজনের তারিখ: ${urgentRequest?.requiredDate ?: "--"}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
