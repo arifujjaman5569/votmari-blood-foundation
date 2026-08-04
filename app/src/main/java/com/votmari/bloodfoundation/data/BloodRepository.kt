@@ -108,7 +108,13 @@ class BloodRepository(private val dao: BloodFoundationDao) {
 }
     suspend fun deleteEvent(id: Int) = dao.deleteEvent(id)
 
-    suspend fun sendChatMessage(message: ChatMessageEntity) = dao.insertChatMessage(message)
+    suspend fun sendChatMessage(message: ChatMessageEntity) {
+    dao.insertChatMessage(message)
+
+    firestore.collection("chat_messages")
+        .add(message)
+        .await()
+}
 
     // --- Mock Data Initializer ---
     suspend fun initializeMockDataIfNeeded() {
