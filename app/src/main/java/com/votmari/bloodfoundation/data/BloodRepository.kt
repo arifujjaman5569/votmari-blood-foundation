@@ -1,12 +1,14 @@
 package com.votmari.bloodfoundation.data
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 
 class BloodRepository(private val dao: BloodFoundationDao) {
                       private val firestore = FirebaseFirestore.getInstance()
+                      private var bloodRequestsListener: ListenerRegistration? = null
 
     // --- Flow streams ---
     val allDonors: Flow<List<DonorEntity>> = dao.getAllDonors()
@@ -67,20 +69,41 @@ class BloodRepository(private val dao: BloodFoundationDao) {
         }
     }
 
+    fun startBloodRequestsSync() {
+    bloodRequestsListener?.remove()
+
+    bloodRequestsListener = firestore
+        .collection("blood_requests")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            // Next step
+        }
+}
+
     suspend fun publishNotice(notice: NoticeEntity) {
+    val noticeId = java.util.UUID.randomUUID().toString()
+
     dao.insertNotice(notice)
 
     firestore.collection("notices")
-        .add(notice)
+        .document(noticeId)
+        .set(notice)
         .await()
 }
     suspend fun deleteNotice(id: Int) = dao.deleteNotice(id)
 
     suspend fun createEvent(event: EventEntity) {
+    val eventId = java.util.UUID.randomUUID().toString()
+
     dao.insertEvent(event)
 
     firestore.collection("events")
-        .add(event)
+        .document(eventId)
+        .set(event)
         .await()
 }
     suspend fun deleteEvent(id: Int) = dao.deleteEvent(id)
