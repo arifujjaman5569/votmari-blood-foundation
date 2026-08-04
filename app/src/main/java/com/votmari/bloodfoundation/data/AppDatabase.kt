@@ -41,6 +41,12 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBloodRequest(request: BloodRequestEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBloodRequests(requests: List<BloodRequestEntity>)
+
+    @Query("DELETE FROM blood_requests")
+    suspend fun clearBloodRequests()
+
     @Query("UPDATE blood_requests SET isApproved = :approved, status = :status WHERE id = :id")
     suspend fun updateRequestStatus(id: String, approved: Boolean, status: String)
 

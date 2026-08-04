@@ -5,6 +5,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class BloodRepository(private val dao: BloodFoundationDao) {
                       private val firestore = FirebaseFirestore.getInstance()
@@ -80,7 +81,14 @@ class BloodRepository(private val dao: BloodFoundationDao) {
                 return@addSnapshotListener
             }
 
-            // Next step
+            val requests = snapshots?.documents?.mapNotNull {
+            it.toObject(BloodRequestEntity::class.java)
+        } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+    dao.clearBloodRequests()
+    dao.insertBloodRequests(requests)
+}
         }
 }
 
