@@ -83,6 +83,12 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvent(event: EventEntity)
 
+    @Query("DELETE FROM events")
+    suspend fun clearEvents()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEvents(events: List<EventEntity>)
+
     @Query("DELETE FROM events WHERE id = :id")
     suspend fun deleteEvent(id: Int)
 
