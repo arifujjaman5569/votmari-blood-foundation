@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -341,8 +342,6 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
     var password by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
     var emailPass by remember { mutableStateOf("") }
     var otpSent by remember { mutableStateOf(false) }
     var verificationId by remember { mutableStateOf("") }
@@ -564,7 +563,10 @@ Spacer(modifier = Modifier.height(12.dp))
 }
 
 @Composable
-fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) {
+fun RegisterWidget(
+    onBack: () -> Unit,
+    onRegisterSubmit: (DonorEntity, String) -> Unit
+) {
     var fullName by remember { mutableStateOf("") }
     var fatherName by remember { mutableStateOf("") }
     var motherName by remember { mutableStateOf("") }
@@ -583,6 +585,8 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
     var weight by remember { mutableStateOf("65.0") }
     var emergencyContact by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     Card(
         modifier = Modifier
@@ -730,7 +734,7 @@ if (password != confirmPassword) {
                             role = "Donor",
                             isApproved = false // Pending approval
                         )
-                        onRegisterSubmit(donor)
+                        onRegisterSubmit(donor, password)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
