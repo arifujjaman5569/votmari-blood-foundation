@@ -323,11 +323,11 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
             )
         } else {
             RegisterWidget(
-                onBack = { isRegisterMode = false },
-                onRegisterSubmit = { donor: DonorEntity ->
-                    viewModel.register(donor)
-                }
-            )
+    onBack = { isRegisterMode = false },
+    onRegisterSubmit = { donor: DonorEntity, password: String ->
+        viewModel.register(donor, password)
+    }
+)
         }
     }
 }
@@ -341,6 +341,8 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
     var password by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var emailPass by remember { mutableStateOf("") }
     var otpSent by remember { mutableStateOf(false) }
     var verificationId by remember { mutableStateOf("") }
@@ -669,6 +671,27 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
                 OutlinedTextField(value = emergencyContact, onValueChange = { emergencyContact = it }, label = { Text("জরুরি যোগাযোগ নম্বর") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("ইমেইল (ঐচ্ছিক)") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+
+OutlinedTextField(
+    value = password,
+    onValueChange = { password = it },
+    label = { Text("পাসওয়ার্ড") },
+    visualTransformation = PasswordVisualTransformation(),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+    modifier = Modifier.fillMaxWidth()
+)
+
+Spacer(modifier = Modifier.height(8.dp))
+
+OutlinedTextField(
+    value = confirmPassword,
+    onValueChange = { confirmPassword = it },
+    label = { Text("পাসওয়ার্ড নিশ্চিত করুন") },
+    visualTransformation = PasswordVisualTransformation(),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+    modifier = Modifier.fillMaxWidth()
+)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -678,6 +701,13 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
                     if (fullName.isBlank() || mobileNumber.isBlank() || emergencyContact.isBlank()) {
                         // validation
                     } else {
+                        if (password.length < 6) {
+    return@Button
+}
+
+if (password != confirmPassword) {
+    return@Button
+}
                         val donor = DonorEntity(
                             mobileNumber = mobileNumber,
                             fullName = fullName,

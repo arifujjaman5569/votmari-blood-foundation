@@ -194,20 +194,29 @@ fun loginWithEmail(
         _currentScreen.value = "profile"
     }
 }
-    fun register(donor: DonorEntity) {
-        viewModelScope.launch {
-            val existing = repository.getDonorByMobile(donor.mobileNumber)
-            if (existing != null) {
-                showToast("এই মোবাইল নাম্বার দিয়ে ইতিমধ্যে একটি একাউন্ট খোলা রয়েছে!")
-                return@launch
-            }
-            repository.registerDonor(donor)
-            _currentUser.value = donor
-            _activeRole.value = donor.role
-            _currentScreen.value = "home"
-            showToast("রেজিস্ট্রেশন সফল হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষা করুন।")
+    fun register(donor: DonorEntity, password: String) {
+    viewModelScope.launch {
+        val existing = repository.getDonorByMobile(donor.mobileNumber)
+        if (existing != null) {
+            showToast("এই মোবাইল নাম্বার দিয়ে ইতিমধ্যে একটি একাউন্ট খোলা রয়েছে!")
+            return@launch
         }
+
+        auth.createUserWithEmailAndPassword(donor.email, password)
+            .addOnSuccessListener {
+                viewModelScope.launch {
+                    repository.registerDonor(donor)
+                    _currentUser.value = donor
+                    _activeRole.value = donor.role
+                    _currentScreen.value = "home"
+                    showToast("রেজিস্ট্রেশন সফল হয়েছে!")
+                }
+            }
+            .addOnFailureListener {
+                showToast(it.message ?: "Firebase Registration ব্যর্থ হয়েছে")
+            }
     }
+}
 
     // --- Admin Dashboard Actions ---
     fun approveDonor(mobile: String) {
