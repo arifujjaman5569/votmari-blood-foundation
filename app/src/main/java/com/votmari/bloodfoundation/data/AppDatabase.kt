@@ -19,6 +19,12 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDonor(donor: DonorEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDonors(donors: List<DonorEntity>)
+
+    @Query("DELETE FROM donors")
+    suspend fun clearDonors()
+
     @Update
     suspend fun updateDonor(donor: DonorEntity)
 
