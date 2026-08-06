@@ -67,6 +67,12 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotice(notice: NoticeEntity)
 
+    @Query("DELETE FROM notices")
+    suspend fun clearNotices()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNotices(notices: List<NoticeEntity>)
+
     @Query("DELETE FROM notices WHERE id = :id")
     suspend fun deleteNotice(id: Int)
 

@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 class BloodRepository(private val dao: BloodFoundationDao) {
                       private val firestore = FirebaseFirestore.getInstance()
                       private var bloodRequestsListener: ListenerRegistration? = null
+                      private var noticesListener: ListenerRegistration? = null
 
     // --- Flow streams ---
     val allDonors: Flow<List<DonorEntity>> = dao.getAllDonors()
@@ -89,6 +90,28 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     dao.clearBloodRequests()
     dao.insertBloodRequests(requests)
 }
+        }
+}
+
+    fun startNoticesSync() {
+    noticesListener?.remove()
+
+    noticesListener = firestore
+        .collection("notices")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val notices = snapshots?.documents?.mapNotNull {
+                it.toObject(NoticeEntity::class.java)
+            } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                dao.clearNotices()
+                dao.insertNotices(notices)
+            }
         }
 }
 
