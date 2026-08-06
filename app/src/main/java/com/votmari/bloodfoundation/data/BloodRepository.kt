@@ -27,6 +27,9 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     // --- Query methods ---
     suspend fun getDonorByMobile(mobile: String): DonorEntity? = dao.getDonorByMobile(mobile)
 
+    suspend fun getDonorByEmail(email: String): DonorEntity? =
+    dao.getDonorByEmail(email)
+
     fun getDonationHistoryForDonor(mobile: String): Flow<List<DonationHistoryEntity>> =
         dao.getDonationHistoryForDonor(mobile)
 

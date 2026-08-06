@@ -13,6 +13,9 @@ interface BloodFoundationDao {
     @Query("SELECT * FROM donors WHERE mobileNumber = :mobile LIMIT 1")
     suspend fun getDonorByMobile(mobile: String): DonorEntity?
 
+    @Query("SELECT * FROM donors WHERE email = :email LIMIT 1")
+    suspend fun getDonorByEmail(email: String): DonorEntity?
+
     @Query("SELECT * FROM donors WHERE isApproved = 1 ORDER BY totalBloodDonationCount DESC")
     fun getLeaderboard(): Flow<List<DonorEntity>>
 

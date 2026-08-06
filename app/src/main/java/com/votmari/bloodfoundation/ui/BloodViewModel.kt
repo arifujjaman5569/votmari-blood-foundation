@@ -169,9 +169,18 @@ fun loginWithEmail(
 ) {
     auth.signInWithEmailAndPassword(email, password)
         .addOnSuccessListener {
-            _activeRole.value = "Super Admin"
-            _currentScreen.value = "dashboard"
-            showToast("সুপার অ্যাডমিন লগইন সফল হয়েছে")
+            viewModelScope.launch {
+                val user = repository.getDonorByEmail(email)
+
+                if (user != null) {
+                    _currentUser.value = user
+                    _activeRole.value = user.role
+                    _currentScreen.value = "dashboard"
+                    showToast("স্বাগতম, ${user.fullName}")
+                } else {
+                    showToast("এই ইমেইলের কোনো ডোনার প্রোফাইল পাওয়া যায়নি")
+                }
+            }
         }
         .addOnFailureListener {
             showToast(it.message ?: "ইমেইল বা পাসওয়ার্ড ভুল")
