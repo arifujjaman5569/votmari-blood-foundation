@@ -16,6 +16,12 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val database = AppDatabase.getDatabase(application)
         repository = BloodRepository(database.dao())
+
+        repository.startDonorsSync()
+        repository.startBloodRequestsSync()
+        repository.startNoticesSync()
+        repository.startEventsSync()
+        repository.startChatSync()
     }
 
     // --- Active State flows ---
