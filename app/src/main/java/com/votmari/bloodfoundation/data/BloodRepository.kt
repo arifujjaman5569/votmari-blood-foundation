@@ -12,6 +12,7 @@ class BloodRepository(private val dao: BloodFoundationDao) {
                       private var bloodRequestsListener: ListenerRegistration? = null
                       private var noticesListener: ListenerRegistration? = null
                       private var eventsListener: ListenerRegistration? = null
+                      private var chatListener: ListenerRegistration? = null
 
     // --- Flow streams ---
     val allDonors: Flow<List<DonorEntity>> = dao.getAllDonors()
@@ -134,6 +135,28 @@ class BloodRepository(private val dao: BloodFoundationDao) {
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
                 dao.clearEvents()
                 dao.insertEvents(events)
+            }
+        }
+}
+
+    fun startChatSync() {
+    chatListener?.remove()
+
+    chatListener = firestore
+        .collection("chat_messages")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val messages = snapshots?.documents?.mapNotNull {
+                it.toObject(ChatMessageEntity::class.java)
+            } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                dao.clearChatMessages()
+                dao.insertChatMessages(messages)
             }
         }
 }
