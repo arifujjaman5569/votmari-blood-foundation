@@ -26,6 +26,7 @@ data class DonorEntity(
     val weight: Double = 0.0,
     val emergencyContactNumber: String,
     val email: String = "",
+    val firebaseUid: String = "",
     val role: String = "Donor", // "Super Admin", "Admin", "Moderator", "Volunteer", "Donor"
     val isApproved: Boolean = false,
     val registeredTimestamp: Long = System.currentTimeMillis()

@@ -16,6 +16,12 @@ interface BloodFoundationDao {
     @Query("SELECT * FROM donors WHERE email = :email LIMIT 1")
     suspend fun getDonorByEmail(email: String): DonorEntity?
 
+    @Query("SELECT * FROM donors WHERE firebaseUid = :uid LIMIT 1")
+    suspend fun getDonorByFirebaseUid(uid: String): DonorEntity?
+
+    @Query("UPDATE donors SET firebaseUid = :uid WHERE email = :email")
+    suspend fun updateFirebaseUid(email: String, uid: String)
+
     @Query("SELECT * FROM donors WHERE isApproved = 1 ORDER BY totalBloodDonationCount DESC")
     fun getLeaderboard(): Flow<List<DonorEntity>>
 

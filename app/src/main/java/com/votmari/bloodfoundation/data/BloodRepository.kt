@@ -30,6 +30,12 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     suspend fun getDonorByEmail(email: String): DonorEntity? =
     dao.getDonorByEmail(email)
 
+    suspend fun getDonorByFirebaseUid(uid: String): DonorEntity? =
+    dao.getDonorByFirebaseUid(uid)
+
+    suspend fun updateFirebaseUid(email: String, uid: String) =
+    dao.updateFirebaseUid(email, uid)
+
     fun getDonationHistoryForDonor(mobile: String): Flow<List<DonationHistoryEntity>> =
         dao.getDonationHistoryForDonor(mobile)
 

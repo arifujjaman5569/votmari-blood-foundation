@@ -173,10 +173,18 @@ fun loginWithEmail(
                 val user = repository.getDonorByEmail(email)
 
                 if (user != null) {
-                    _currentUser.value = user
-                    _activeRole.value = user.role
-                    _currentScreen.value = "dashboard"
-                    showToast("স্বাগতম, ${user.fullName}")
+                    val uid = auth.currentUser?.uid ?: ""
+
+if (user.firebaseUid.isBlank()) {
+    repository.updateFirebaseUid(email, uid)
+}
+
+val linkedUser = repository.getDonorByFirebaseUid(uid) ?: user
+
+_currentUser.value = linkedUser
+_activeRole.value = linkedUser.role
+_currentScreen.value = "dashboard"
+showToast("স্বাগতম, ${linkedUser.fullName}")
                 } else {
                     showToast("এই ইমেইলের কোনো ডোনার প্রোফাইল পাওয়া যায়নি")
                 }
