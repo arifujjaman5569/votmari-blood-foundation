@@ -201,7 +201,7 @@ fun loginWithEmail(
 
                     val newDonor = DonorEntity(
                         mobileNumber = "firebase_$uid",
-                        fullName = firebaseUser.displayName ?: "Firebase User",
+                        fullName = firebaseUser?.displayName ?: "Firebase User",
                         fatherName = "",
                         motherName = "",
                         whatsAppNumber = "",
