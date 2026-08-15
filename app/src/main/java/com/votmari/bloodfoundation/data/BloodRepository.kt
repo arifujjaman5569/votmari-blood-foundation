@@ -50,6 +50,10 @@ class BloodRepository(private val dao: BloodFoundationDao) {
         .set(donor)
         .await()
 }
+
+    suspend fun insertDonor(donor: DonorEntity) {
+    dao.insertDonor(donor)
+}
     suspend fun updateDonor(donor: DonorEntity) = dao.updateDonor(donor)
     suspend fun approveDonor(mobile: String, approved: Boolean) = dao.approveDonor(mobile, approved)
     suspend fun updateDonorRole(mobile: String, role: String) = dao.updateDonorRole(mobile, role)

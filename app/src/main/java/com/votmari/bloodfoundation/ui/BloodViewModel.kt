@@ -170,23 +170,65 @@ fun loginWithEmail(
     auth.signInWithEmailAndPassword(email, password)
         .addOnSuccessListener {
             viewModelScope.launch {
-                val user = repository.getDonorByEmail(email)
+                val firebaseUser = auth.currentUser
+                val uid = firebaseUser?.uid ?: ""
+
+                if (uid.isBlank()) {
+                    showToast("Firebase UID পাওয়া যায়নি")
+                    return@launch
+                }
+
+                var user = repository.getDonorByFirebaseUid(uid)
+
+                if (user == null) {
+                    user = repository.getDonorByEmail(email)
+                }
 
                 if (user != null) {
-                    val uid = auth.currentUser?.uid ?: ""
 
-if (user.firebaseUid.isBlank()) {
-    repository.updateFirebaseUid(email, uid)
-}
+                    if (user.firebaseUid.isBlank()) {
+                        repository.updateFirebaseUid(email, uid)
+                        user = user.copy(firebaseUid = uid)
+                    }
 
-val linkedUser = repository.getDonorByFirebaseUid(uid) ?: user
+                    _currentUser.value = user
+                    _activeRole.value = user.role
+                    _currentScreen.value = "dashboard"
 
-_currentUser.value = linkedUser
-_activeRole.value = linkedUser.role
-_currentScreen.value = "dashboard"
-showToast("স্বাগতম, ${linkedUser.fullName}")
+                    showToast("স্বাগতম, ${user.fullName}")
+
                 } else {
-                    showToast("এই ইমেইলের কোনো ডোনার প্রোফাইল পাওয়া যায়নি")
+
+                    val newDonor = DonorEntity(
+                        mobileNumber = "firebase_$uid",
+                        fullName = firebaseUser.displayName ?: "Firebase User",
+                        fatherName = "",
+                        motherName = "",
+                        whatsAppNumber = "",
+                        bloodGroup = "A+",
+                        dateOfBirth = "",
+                        gender = "",
+                        occupation = "",
+                        nationalIdNumber = "",
+                        address = "",
+                        division = "",
+                        district = "",
+                        upazila = "",
+                        village = "",
+                        emergencyContactNumber = "",
+                        email = email,
+                        role = "Donor",
+                        isApproved = false,
+                        firebaseUid = uid
+                    )
+
+                    repository.insertDonor(newDonor)
+
+                    _currentUser.value = newDonor
+                    _activeRole.value = "Donor"
+                    _currentScreen.value = "home"
+
+                    showToast("অ্যাকাউন্ট তৈরি হয়েছে। প্রোফাইল সম্পূর্ণ করুন।")
                 }
             }
         }
