@@ -481,7 +481,7 @@ Spacer(modifier = Modifier.height(12.dp))
                         singleLine = true
                     )
                     TextButton(
-                        onClick = { viewModel.showToast("পাসওয়ার্ড পুনরুদ্ধারের লিঙ্ক ইমেইলে পাঠানো হয়েছে।") },
+                        onClick = { viewModel.resetPassword(email) },
                         modifier = Modifier.align(Alignment.End)
                     ) {
                         Text("পাসওয়ার্ড ভুলে গেছেন?")

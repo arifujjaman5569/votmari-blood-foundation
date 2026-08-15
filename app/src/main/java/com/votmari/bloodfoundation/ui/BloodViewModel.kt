@@ -236,6 +236,22 @@ fun loginWithEmail(
             showToast(it.message ?: "ইমেইল বা পাসওয়ার্ড ভুল")
         }
 }
+
+fun resetPassword(email: String) {
+    if (email.isBlank()) {
+        showToast("আগে আপনার ইমেইল লিখুন")
+        return
+    }
+
+    auth.sendPasswordResetEmail(email)
+        .addOnSuccessListener {
+            showToast("পাসওয়ার্ড রিসেট লিঙ্ক আপনার ইমেইলে পাঠানো হয়েছে।")
+        }
+        .addOnFailureListener {
+            showToast(it.message ?: "পাসওয়ার্ড রিসেট করা যায়নি")
+        }
+}
+
     fun saveProfile(updatedUser: DonorEntity) {
     viewModelScope.launch {
         repository.updateDonor(updatedUser)
