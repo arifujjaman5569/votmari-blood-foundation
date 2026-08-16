@@ -13,11 +13,26 @@ interface BloodFoundationDao {
     @Query("SELECT * FROM donors WHERE mobileNumber = :mobile LIMIT 1")
     suspend fun getDonorByMobile(mobile: String): DonorEntity?
 
+    @Query("SELECT * FROM donors WHERE email = :email LIMIT 1")
+    suspend fun getDonorByEmail(email: String): DonorEntity?
+
+    @Query("SELECT * FROM donors WHERE firebaseUid = :uid LIMIT 1")
+    suspend fun getDonorByFirebaseUid(uid: String): DonorEntity?
+
+    @Query("UPDATE donors SET firebaseUid = :uid WHERE email = :email")
+    suspend fun updateFirebaseUid(email: String, uid: String)
+
     @Query("SELECT * FROM donors WHERE isApproved = 1 ORDER BY totalBloodDonationCount DESC")
     fun getLeaderboard(): Flow<List<DonorEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDonor(donor: DonorEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDonors(donors: List<DonorEntity>)
+
+    @Query("DELETE FROM donors")
+    suspend fun clearDonors()
 
     @Update
     suspend fun updateDonor(donor: DonorEntity)
@@ -41,8 +56,14 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBloodRequest(request: BloodRequestEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBloodRequests(requests: List<BloodRequestEntity>)
+
+    @Query("DELETE FROM blood_requests")
+    suspend fun clearBloodRequests()
+
     @Query("UPDATE blood_requests SET isApproved = :approved, status = :status WHERE id = :id")
-    suspend fun updateRequestStatus(id: Int, approved: Boolean, status: String)
+    suspend fun updateRequestStatus(id: String, approved: Boolean, status: String)
 
     // --- Donation History ---
     @Query("SELECT * FROM donation_history ORDER BY id DESC")
@@ -61,6 +82,12 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotice(notice: NoticeEntity)
 
+    @Query("DELETE FROM notices")
+    suspend fun clearNotices()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNotices(notices: List<NoticeEntity>)
+
     @Query("DELETE FROM notices WHERE id = :id")
     suspend fun deleteNotice(id: Int)
 
@@ -71,6 +98,12 @@ interface BloodFoundationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvent(event: EventEntity)
 
+    @Query("DELETE FROM events")
+    suspend fun clearEvents()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEvents(events: List<EventEntity>)
+
     @Query("DELETE FROM events WHERE id = :id")
     suspend fun deleteEvent(id: Int)
 
@@ -80,6 +113,12 @@ interface BloodFoundationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChatMessage(message: ChatMessageEntity)
+
+    @Query("DELETE FROM chat_messages")
+    suspend fun clearChatMessages()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChatMessages(messages: List<ChatMessageEntity>)
 }
 
 @Database(

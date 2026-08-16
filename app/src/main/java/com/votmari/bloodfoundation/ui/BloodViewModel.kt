@@ -3,6 +3,8 @@ package com.votmari.bloodfoundation.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.votmari.bloodfoundation.auth.FirebasePhoneAuth
 import com.votmari.bloodfoundation.data.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -10,13 +12,34 @@ import kotlinx.coroutines.launch
 class BloodViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: BloodRepository
+    private val auth = FirebaseAuth.getInstance()
     init {
-        val database = AppDatabase.getDatabase(application)
-        repository = BloodRepository(database.dao())
+    val database = AppDatabase.getDatabase(application)
+    repository = BloodRepository(database.dao())
+
+    repository.startDonorsSync()
+    repository.startBloodRequestsSync()
+    repository.startNoticesSync()
+    repository.startEventsSync()
+    repository.startChatSync()
+
+    val firebaseUser = auth.currentUser
+
+    if (firebaseUser != null) {
         viewModelScope.launch {
-            repository.initializeMockDataIfNeeded()
+            val uid = firebaseUser.uid
+
+            val user = repository.getDonorByFirebaseUid(uid)
+                ?: repository.getDonorByEmail(firebaseUser.email ?: "")
+
+            if (user != null) {
+                _currentUser.value = user
+                _activeRole.value = user.role
+                _currentScreen.value = "home"
+            }
         }
     }
+}
 
     // --- Active State flows ---
     val allDonors: StateFlow<List<DonorEntity>> = repository.allDonors
@@ -114,26 +137,6 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loginAsDemoRole(role: String) {
-        viewModelScope.launch {
-            // Find a seeded user of this role, or login with temporary mock
-            val demoMobile = when (role) {
-                "Super Admin" -> "01700000001"
-                "Admin" -> "01700000002"
-                "Moderator" -> "01700000003"
-                "Volunteer" -> "01700000004"
-                else -> "01755555551"
-            }
-            val user = repository.getDonorByMobile(demoMobile)
-            if (user != null) {
-                _currentUser.value = user
-                _activeRole.value = user.role
-                _currentScreen.value = "home"
-                showToast("ডেমো লগইন: ${user.fullName} (${user.role})")
-            }
-        }
-    }
-
     fun overrideRoleForTesting(newRole: String) {
         _activeRole.value = newRole
         showToast("টেস্টিং মোড: রোল পরিবর্তন করে '$newRole' করা হয়েছে।")
@@ -145,21 +148,158 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         _currentScreen.value = "onboarding"
         showToast("সফলভাবে লগআউট করা হয়েছে।")
     }
+    
+    fun sendOtp(
+    activity: android.app.Activity,
+    phone: String,
+    callbacks: com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
+) {
+    FirebasePhoneAuth.sendOtp(
+        activity = activity,
+        phone = phone,
+        callbacks = callbacks
+    )
+}
 
-    fun register(donor: DonorEntity) {
-        viewModelScope.launch {
-            val existing = repository.getDonorByMobile(donor.mobileNumber)
-            if (existing != null) {
-                showToast("এই মোবাইল নাম্বার দিয়ে ইতিমধ্যে একটি একাউন্ট খোলা রয়েছে!")
-                return@launch
-            }
-            repository.registerDonor(donor)
-            _currentUser.value = donor
-            _activeRole.value = donor.role
+fun verifyOtp(
+    verificationId: String,
+    otp: String,
+    onSuccess: () -> Unit = {}
+) {
+    val credential = FirebasePhoneAuth.getCredential(verificationId, otp)
+
+    FirebasePhoneAuth.signIn(
+        credential = credential,
+        onSuccess = {
+            showToast("লগইন সফল হয়েছে")
             _currentScreen.value = "home"
-            showToast("রেজিস্ট্রেশন সফল হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষা করুন।")
+            onSuccess()
+        },
+        onError = {
+            showToast(it)
         }
+    )
+}
+fun loginWithEmail(
+    email: String,
+    password: String
+) {
+    auth.signInWithEmailAndPassword(email, password)
+        .addOnSuccessListener {
+            viewModelScope.launch {
+                val firebaseUser = auth.currentUser
+                val uid = firebaseUser?.uid ?: ""
+
+                if (uid.isBlank()) {
+                    showToast("Firebase UID পাওয়া যায়নি")
+                    return@launch
+                }
+
+                var user = repository.getDonorByFirebaseUid(uid)
+
+                if (user == null) {
+                    user = repository.getDonorByEmail(email)
+                }
+
+                if (user != null) {
+
+                    if (user.firebaseUid.isBlank()) {
+                        repository.updateFirebaseUid(email, uid)
+                        user = user.copy(firebaseUid = uid)
+                    }
+
+                    _currentUser.value = user
+                    _activeRole.value = user.role
+                    _currentScreen.value = "dashboard"
+
+                    showToast("স্বাগতম, ${user.fullName}")
+
+                } else {
+
+                    val newDonor = DonorEntity(
+                        mobileNumber = "firebase_$uid",
+                        fullName = firebaseUser?.displayName ?: "Firebase User",
+                        fatherName = "",
+                        motherName = "",
+                        whatsAppNumber = "",
+                        bloodGroup = "A+",
+                        dateOfBirth = "",
+                        gender = "",
+                        occupation = "",
+                        nationalIdNumber = "",
+                        address = "",
+                        division = "",
+                        district = "",
+                        upazila = "",
+                        village = "",
+                        emergencyContactNumber = "",
+                        email = email,
+                        role = "Donor",
+                        isApproved = false,
+                        firebaseUid = uid
+                    )
+
+                    repository.insertDonor(newDonor)
+
+                    _currentUser.value = newDonor
+                    _activeRole.value = "Donor"
+                    _currentScreen.value = "home"
+
+                    showToast("অ্যাকাউন্ট তৈরি হয়েছে। প্রোফাইল সম্পূর্ণ করুন।")
+                }
+            }
+        }
+        .addOnFailureListener {
+            showToast(it.message ?: "ইমেইল বা পাসওয়ার্ড ভুল")
+        }
+}
+
+fun resetPassword(email: String) {
+    if (email.isBlank()) {
+        showToast("আগে আপনার ইমেইল লিখুন")
+        return
     }
+
+    auth.sendPasswordResetEmail(email)
+        .addOnSuccessListener {
+            showToast("পাসওয়ার্ড রিসেট লিঙ্ক আপনার ইমেইলে পাঠানো হয়েছে।")
+        }
+        .addOnFailureListener {
+            showToast(it.message ?: "পাসওয়ার্ড রিসেট করা যায়নি")
+        }
+}
+
+    fun saveProfile(updatedUser: DonorEntity) {
+    viewModelScope.launch {
+        repository.updateDonor(updatedUser)
+        _currentUser.value = updatedUser
+        showToast("প্রোফাইল সফলভাবে আপডেট হয়েছে")
+        _currentScreen.value = "profile"
+    }
+}
+    fun register(donor: DonorEntity, password: String) {
+    viewModelScope.launch {
+        val existing = repository.getDonorByMobile(donor.mobileNumber)
+        if (existing != null) {
+            showToast("এই মোবাইল নাম্বার দিয়ে ইতিমধ্যে একটি একাউন্ট খোলা রয়েছে!")
+            return@launch
+        }
+
+        auth.createUserWithEmailAndPassword(donor.email, password)
+            .addOnSuccessListener {
+                viewModelScope.launch {
+                    repository.registerDonor(donor)
+                    _currentUser.value = donor
+                    _activeRole.value = donor.role
+                    _currentScreen.value = "home"
+                    showToast("রেজিস্ট্রেশন সফল হয়েছে!")
+                }
+            }
+            .addOnFailureListener {
+                showToast(it.message ?: "Firebase Registration ব্যর্থ হয়েছে")
+            }
+    }
+}
 
     // --- Admin Dashboard Actions ---
     fun approveDonor(mobile: String) {
@@ -183,21 +323,21 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun approveBloodRequest(id: Int) {
+    fun approveBloodRequest(id: String) {
         viewModelScope.launch {
             repository.updateRequestStatus(id, true, "Approved")
             showToast("রক্তের আবেদন অ্যাপ্রুভ করা হয়েছে।")
         }
     }
 
-    fun rejectBloodRequest(id: Int) {
+    fun rejectBloodRequest(id: String) {
         viewModelScope.launch {
             repository.updateRequestStatus(id, false, "Cancelled")
             showToast("রক্তের আবেদন বাতিল করা হয়েছে।")
         }
     }
 
-    fun completeBloodRequest(id: Int) {
+    fun completeBloodRequest(id: String) {
         viewModelScope.launch {
             repository.updateRequestStatus(id, true, "Completed")
             showToast("রক্তের আবেদন সম্পন্ন হিসেবে চিহ্নিত করা হয়েছে।")

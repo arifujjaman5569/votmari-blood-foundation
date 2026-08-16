@@ -1,9 +1,19 @@
 package com.votmari.bloodfoundation.data
 
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class BloodRepository(private val dao: BloodFoundationDao) {
+                      private val firestore = FirebaseFirestore.getInstance()
+                      private var bloodRequestsListener: ListenerRegistration? = null
+                      private var noticesListener: ListenerRegistration? = null
+                      private var eventsListener: ListenerRegistration? = null
+                      private var chatListener: ListenerRegistration? = null
+                      private var donorsListener: ListenerRegistration? = null
 
     // --- Flow streams ---
     val allDonors: Flow<List<DonorEntity>> = dao.getAllDonors()
@@ -17,20 +27,51 @@ class BloodRepository(private val dao: BloodFoundationDao) {
     // --- Query methods ---
     suspend fun getDonorByMobile(mobile: String): DonorEntity? = dao.getDonorByMobile(mobile)
 
+    suspend fun getDonorByEmail(email: String): DonorEntity? =
+    dao.getDonorByEmail(email)
+
+    suspend fun getDonorByFirebaseUid(uid: String): DonorEntity? =
+    dao.getDonorByFirebaseUid(uid)
+
+    suspend fun updateFirebaseUid(email: String, uid: String) =
+    dao.updateFirebaseUid(email, uid)
+
     fun getDonationHistoryForDonor(mobile: String): Flow<List<DonationHistoryEntity>> =
         dao.getDonationHistoryForDonor(mobile)
 
     fun getAllDonationHistory(): Flow<List<DonationHistoryEntity>> = dao.getAllDonationHistory()
 
     // --- Write actions ---
-    suspend fun registerDonor(donor: DonorEntity) = dao.insertDonor(donor)
+    suspend fun registerDonor(donor: DonorEntity) {
+    dao.insertDonor(donor)
+
+    firestore.collection("donors")
+        .document(donor.mobileNumber)
+        .set(donor)
+        .await()
+}
+
+    suspend fun insertDonor(donor: DonorEntity) {
+    dao.insertDonor(donor)
+}
     suspend fun updateDonor(donor: DonorEntity) = dao.updateDonor(donor)
     suspend fun approveDonor(mobile: String, approved: Boolean) = dao.approveDonor(mobile, approved)
     suspend fun updateDonorRole(mobile: String, role: String) = dao.updateDonorRole(mobile, role)
     suspend fun deleteDonor(mobile: String) = dao.deleteDonor(mobile)
 
-    suspend fun submitBloodRequest(request: BloodRequestEntity) = dao.insertBloodRequest(request)
-    suspend fun updateRequestStatus(id: Int, approved: Boolean, status: String) =
+    suspend fun submitBloodRequest(request: BloodRequestEntity) {
+    val requestId = java.util.UUID.randomUUID().toString()
+
+    val firestoreRequest = request.copy(id = requestId)
+
+    dao.insertBloodRequest(firestoreRequest)
+
+    firestore.collection("blood_requests")
+        .document(requestId)
+        .set(firestoreRequest)
+        .await()
+}
+    suspend fun updateRequestStatus(id: String, approved: Boolean, status: String) =
         dao.updateRequestStatus(id, approved, status)
 
     suspend fun addDonationHistory(donation: DonationHistoryEntity) {
@@ -46,13 +87,147 @@ class BloodRepository(private val dao: BloodFoundationDao) {
         }
     }
 
-    suspend fun publishNotice(notice: NoticeEntity) = dao.insertNotice(notice)
+    fun startBloodRequestsSync() {
+    bloodRequestsListener?.remove()
+
+    bloodRequestsListener = firestore
+        .collection("blood_requests")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val requests = snapshots?.documents?.mapNotNull {
+            it.toObject(BloodRequestEntity::class.java)
+        } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+    dao.clearBloodRequests()
+    dao.insertBloodRequests(requests)
+}
+        }
+}
+
+    fun startNoticesSync() {
+    noticesListener?.remove()
+
+    noticesListener = firestore
+        .collection("notices")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val notices = snapshots?.documents?.mapNotNull {
+                it.toObject(NoticeEntity::class.java)
+            } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                dao.clearNotices()
+                dao.insertNotices(notices)
+            }
+        }
+}
+
+    fun startEventsSync() {
+    eventsListener?.remove()
+
+    eventsListener = firestore
+        .collection("events")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val events = snapshots?.documents?.mapNotNull {
+                it.toObject(EventEntity::class.java)
+            } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                dao.clearEvents()
+                dao.insertEvents(events)
+            }
+        }
+}
+
+    fun startChatSync() {
+    chatListener?.remove()
+
+    chatListener = firestore
+        .collection("chat_messages")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val messages = snapshots?.documents?.mapNotNull {
+                it.toObject(ChatMessageEntity::class.java)
+            } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                dao.clearChatMessages()
+                dao.insertChatMessages(messages)
+            }
+        }
+}
+
+    fun startDonorsSync() {
+    donorsListener?.remove()
+
+    donorsListener = firestore
+        .collection("donors")
+        .addSnapshotListener { snapshots, error ->
+
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            val donors = snapshots?.documents?.mapNotNull {
+                it.toObject(DonorEntity::class.java)
+            } ?: emptyList()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                dao.clearDonors()
+                dao.insertDonors(donors)
+            }
+        }
+}
+
+    suspend fun publishNotice(notice: NoticeEntity) {
+    val noticeId = java.util.UUID.randomUUID().toString()
+
+    dao.insertNotice(notice)
+
+    firestore.collection("notices")
+        .document(noticeId)
+        .set(notice)
+        .await()
+}
     suspend fun deleteNotice(id: Int) = dao.deleteNotice(id)
 
-    suspend fun createEvent(event: EventEntity) = dao.insertEvent(event)
+    suspend fun createEvent(event: EventEntity) {
+    val eventId = java.util.UUID.randomUUID().toString()
+
+    dao.insertEvent(event)
+
+    firestore.collection("events")
+        .document(eventId)
+        .set(event)
+        .await()
+}
     suspend fun deleteEvent(id: Int) = dao.deleteEvent(id)
 
-    suspend fun sendChatMessage(message: ChatMessageEntity) = dao.insertChatMessage(message)
+    suspend fun sendChatMessage(message: ChatMessageEntity) {
+    dao.insertChatMessage(message)
+
+    firestore.collection("chat_messages")
+        .add(message)
+        .await()
+}
 
     // --- Mock Data Initializer ---
     suspend fun initializeMockDataIfNeeded() {
