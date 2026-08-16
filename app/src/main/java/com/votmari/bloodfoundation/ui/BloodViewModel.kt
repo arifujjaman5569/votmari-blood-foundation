@@ -14,15 +14,32 @@ class BloodViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: BloodRepository
     private val auth = FirebaseAuth.getInstance()
     init {
-        val database = AppDatabase.getDatabase(application)
-        repository = BloodRepository(database.dao())
+    val database = AppDatabase.getDatabase(application)
+    repository = BloodRepository(database.dao())
 
-        repository.startDonorsSync()
-        repository.startBloodRequestsSync()
-        repository.startNoticesSync()
-        repository.startEventsSync()
-        repository.startChatSync()
+    repository.startDonorsSync()
+    repository.startBloodRequestsSync()
+    repository.startNoticesSync()
+    repository.startEventsSync()
+    repository.startChatSync()
+
+    val firebaseUser = auth.currentUser
+
+    if (firebaseUser != null) {
+        viewModelScope.launch {
+            val uid = firebaseUser.uid
+
+            val user = repository.getDonorByFirebaseUid(uid)
+                ?: repository.getDonorByEmail(firebaseUser.email ?: "")
+
+            if (user != null) {
+                _currentUser.value = user
+                _activeRole.value = user.role
+                _currentScreen.value = "home"
+            }
+        }
     }
+}
 
     // --- Active State flows ---
     val allDonors: StateFlow<List<DonorEntity>> = repository.allDonors
