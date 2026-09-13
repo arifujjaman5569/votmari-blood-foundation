@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -41,7 +43,11 @@ import coil.compose.AsyncImage
 import com.votmari.bloodfoundation.R
 import com.votmari.bloodfoundation.data.*
 import com.votmari.bloodfoundation.ui.BloodViewModel
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthProvider
 import com.votmari.bloodfoundation.ui.theme.*
+import com.votmari.bloodfoundation.ui.screens.profile.EditProfileScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -90,49 +96,6 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                         }
                     },
                     actions = {
-                        // Display active role badge and click to simulate other roles!
-                        var showRolePicker by remember { mutableStateOf(false) }
-                        AssistChip(
-                            onClick = { showRolePicker = true },
-                            label = { Text(activeRole, fontWeight = FontWeight.Bold) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                labelColor = MaterialTheme.colorScheme.primary,
-                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                            )
-                        )
-
-                        if (showRolePicker) {
-                            AlertDialog(
-                                onDismissRequest = { showRolePicker = false },
-                                title = { Text("রোল টেস্টিং মোড (Select Role)", fontSize = 16.sp) },
-                                text = {
-                                    Column {
-                                        Text("অ্যাপের ৪ ধরনের ইউজার রোল সরাসরি টেস্ট করতে নিচে যেকোনো একটি নির্বাচন করুন:", fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
-                                        val roles = listOf("Super Admin", "Admin", "Moderator", "Volunteer", "Donor")
-                                        roles.forEach { role ->
-                                            Button(
-                                                onClick = {
-                                                    viewModel.overrideRoleForTesting(role)
-                                                    showRolePicker = false
-                                                },
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (activeRole == role) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                                    contentColor = if (activeRole == role) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            ) {
-                                                Text(role)
-                                            }
-                                        }
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { showRolePicker = false }) {
-                                        Text("বন্ধ করুন")
-                                    }
-                                }
-                            )
-                        }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
@@ -201,6 +164,15 @@ fun MainAppContent(viewModel: BloodViewModel = viewModel()) {
                 "request" -> RequestBloodScreen(viewModel)
                 "leaderboard" -> LeaderboardScreen(viewModel)
                 "profile" -> ProfileScreen(viewModel)
+                "edit_profile" -> EditProfileScreen(
+    user = viewModel.currentUser.value!!,
+    onSave = { updatedUser ->
+    viewModel.saveProfile(updatedUser)
+},
+    onBack = {
+        viewModel.setScreen("profile")
+    }
+)
                 "extras" -> ExtraToolsScreen(viewModel)
                 "dashboard" -> AdminDashboardScreen(viewModel)
             }
@@ -341,7 +313,7 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-      
+
         } else if (isLoginMode) {
             LoginWidget(
                 onBack = { isLoginMode = false },
@@ -352,11 +324,11 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
             )
         } else {
             RegisterWidget(
-                onBack = { isRegisterMode = false },
-                onRegisterSubmit = { donor ->
-                    viewModel.register(donor)
-                }
-            )
+    onBack = { isRegisterMode = false },
+    onRegisterSubmit = { donor: DonorEntity, password: String ->
+        viewModel.register(donor, password)
+    }
+)
         }
     }
 }
@@ -364,8 +336,15 @@ fun OnboardingScreen(viewModel: BloodViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: BloodViewModel) {
+    val context = LocalContext.current
+    val activity = context as android.app.Activity
     var mobileNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var otpCode by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var emailPass by remember { mutableStateOf("") }
+    var otpSent by remember { mutableStateOf(false) }
+    var verificationId by remember { mutableStateOf("") }
     var loginMethod by remember { mutableStateOf("Mobile OTP") } // "Mobile OTP", "Email", "Google"
 
     Card(
@@ -419,7 +398,7 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                     OutlinedTextField(
                         value = mobileNumber,
                         onValueChange = { mobileNumber = it },
-                        label = { Text("মোবাইল নম্বর (যেমন: 01755555551)") },
+                        label = { Text("মোবাইল নম্বর") },
                         leadingIcon = { Icon(Icons.Default.Phone, contentDescription = "Phone") },
                         modifier = Modifier.fillMaxWidth().testTag("login_mobile_input"),
                         shape = RoundedCornerShape(12.dp),
@@ -427,10 +406,53 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+    onClick = {
+        if (mobileNumber.isBlank()) {
+            viewModel.showToast("মোবাইল নম্বর লিখুন")
+        } else {
+    viewModel.sendOtp(
+        activity = activity,
+        phone = "+88$mobileNumber",
+        callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+
+            override fun onVerificationCompleted(
+                credential: PhoneAuthCredential
+            ) {
+                viewModel.showToast("OTP স্বয়ংক্রিয়ভাবে যাচাই হয়েছে")
+            }
+
+            override fun onVerificationFailed(
+                e: FirebaseException
+            ) {
+                viewModel.showToast(e.message ?: "OTP পাঠানো ব্যর্থ হয়েছে")
+            }
+
+            override fun onCodeSent(
+                id: String,
+                token: PhoneAuthProvider.ForceResendingToken
+            ) {
+                verificationId = id
+                otpSent = true
+                viewModel.showToast("OTP পাঠানো হয়েছে")
+            }
+
+            override fun onCodeAutoRetrievalTimeOut(id: String) {
+    verificationId = id
+}
+        }
+    )
+}
+    },
+    modifier = Modifier.fillMaxWidth()
+) {
+    Text(if (otpSent) "OTP পুনরায় পাঠান" else "OTP পাঠান")
+}
+Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("OTP কোড (যেকোনো কিছু লিখুন)") },
+                        value = otpCode,
+                        onValueChange = { otpCode = it },
+                        label = { Text("OTP কোড") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "OTP") },
                         modifier = Modifier.fillMaxWidth().testTag("login_otp_input"),
                         shape = RoundedCornerShape(12.dp),
@@ -439,8 +461,6 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                     )
                 }
                 "Email" -> {
-                    var email by remember { mutableStateOf("") }
-                    var emailPass by remember { mutableStateOf("") }
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -461,7 +481,7 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                         singleLine = true
                     )
                     TextButton(
-                        onClick = { viewModel.showToast("পাসওয়ার্ড পুনরুদ্ধারের লিঙ্ক ইমেইলে পাঠানো হয়েছে।") },
+                        onClick = { viewModel.resetPassword(email) },
                         modifier = Modifier.align(Alignment.End)
                     ) {
                         Text("পাসওয়ার্ড ভুলে গেছেন?")
@@ -476,7 +496,7 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = {
-                                viewModel.loginAsDemoRole("Donor")
+                                viewModel.showToast("Google Login শীঘ্রই আসছে")
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             modifier = Modifier.fillMaxWidth()
@@ -489,29 +509,64 @@ fun LoginWidget(onBack: () -> Unit, onLoginSubmit: (String) -> Unit, viewModel: 
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             if (loginMethod != "Google") {
-    Button(
-        onClick = {
-            if (mobileNumber.isBlank() && loginMethod == "Mobile OTP") {
-                viewModel.showToast("অনুগ্রহ করে মোবাইল নম্বর প্রদান করুন!")
-            } else {
-                onLoginSubmit(mobileNumber)
-         ✉   }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .testTag("login_submit_button"),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Text("লগইন", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-           }
-       }
+                Button(
+    onClick = {
+        if (mobileNumber.isBlank() && loginMethod == "Mobile OTP") {
+            viewModel.showToast("অনুগ্রহ করে মোবাইল নম্বর প্রদান করুন!")
+        } else {
+            if (loginMethod == "Mobile OTP") {
+
+                if (verificationId.isBlank()) {
+                    viewModel.showToast("আগে OTP পাঠান")
+                } else if (otpCode.isBlank()) {
+                    viewModel.showToast("OTP লিখুন")
+                } else {
+                    viewModel.verifyOtp(
+                        verificationId = verificationId,
+                        otp = otpCode
+                    )
+                }
+
+            } else if (loginMethod == "Email") {
+    if (email.isBlank() || emailPass.isBlank()) {
+        viewModel.showToast("ইমেইল এবং পাসওয়ার্ড লিখুন")
+    } else {
+        viewModel.loginWithEmail(
+            email = email,
+            password = emailPass
+        )
+    }
+}
+        }
+    },
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(48.dp)
+        .testTag("login_submit_button"),
+    shape = RoundedCornerShape(12.dp)
+) {
+    Text(
+        "লগইন",
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+}
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
 @Composable
-fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) {
+fun RegisterWidget(
+    onBack: () -> Unit,
+    onRegisterSubmit: (DonorEntity, String) -> Unit
+) {
     var fullName by remember { mutableStateOf("") }
     var fatherName by remember { mutableStateOf("") }
     var motherName by remember { mutableStateOf("") }
@@ -530,6 +585,8 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
     var weight by remember { mutableStateOf("65.0") }
     var emergencyContact by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     Card(
         modifier = Modifier
@@ -618,6 +675,27 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
                 OutlinedTextField(value = emergencyContact, onValueChange = { emergencyContact = it }, label = { Text("জরুরি যোগাযোগ নম্বর") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("ইমেইল (ঐচ্ছিক)") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+
+OutlinedTextField(
+    value = password,
+    onValueChange = { password = it },
+    label = { Text("পাসওয়ার্ড") },
+    visualTransformation = PasswordVisualTransformation(),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+    modifier = Modifier.fillMaxWidth()
+)
+
+Spacer(modifier = Modifier.height(8.dp))
+
+OutlinedTextField(
+    value = confirmPassword,
+    onValueChange = { confirmPassword = it },
+    label = { Text("পাসওয়ার্ড নিশ্চিত করুন") },
+    visualTransformation = PasswordVisualTransformation(),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+    modifier = Modifier.fillMaxWidth()
+)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -627,6 +705,13 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
                     if (fullName.isBlank() || mobileNumber.isBlank() || emergencyContact.isBlank()) {
                         // validation
                     } else {
+                        if (password.length < 6) {
+    return@Button
+}
+
+if (password != confirmPassword) {
+    return@Button
+}
                         val donor = DonorEntity(
                             mobileNumber = mobileNumber,
                             fullName = fullName,
@@ -649,7 +734,7 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
                             role = "Donor",
                             isApproved = false // Pending approval
                         )
-                        onRegisterSubmit(donor)
+                        onRegisterSubmit(donor, password)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -667,6 +752,11 @@ fun RegisterWidget(onBack: () -> Unit, onRegisterSubmit: (DonorEntity) -> Unit) 
 fun HomeScreen(viewModel: BloodViewModel) {
     val notices by viewModel.allNotices.collectAsState()
     val events by viewModel.allEvents.collectAsState()
+    val donorsList by viewModel.allDonors.collectAsState()
+    val requestsList by viewModel.allBloodRequests.collectAsState()
+    val urgentRequest = requestsList.firstOrNull {
+    it.status == "Approved" || it.status == "Pending"
+}
     val activeRole by viewModel.activeRole.collectAsState()
 
     LazyColumn(
@@ -728,15 +818,44 @@ fun HomeScreen(viewModel: BloodViewModel) {
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "O+ পজিটিভ রক্তের প্রয়োজন",
+                        text = "${urgentRequest?.bloodGroup ?: "--"} রক্তের প্রয়োজন",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "রংপুর মেডিকেল কলেজ হাসপাতাল (RMCH)",
+                        text = urgentRequest?.hospitalName ?: "এই মুহূর্তে কোনো রক্তের অনুরোধ নেই",
                         fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
+                    Text(
+                        text = "রোগী: ${urgentRequest?.patientName ?: "--"}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
+                    Text(
+                        text = "রক্তের পরিমাণ: ${urgentRequest?.bloodQuantity ?: "--"}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
+                    Text(
+                        text = "প্রয়োজনের তারিখ: ${urgentRequest?.requiredDate ?: "--"}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
+                    Text(
+                        text = "জরুরিতা: ${urgentRequest?.urgencyLevel ?: "--"}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
                         modifier = Modifier.padding(top = 2.dp)
                     )
 
@@ -897,7 +1016,7 @@ fun HomeScreen(viewModel: BloodViewModel) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "১,২৪৮",
+                        text = donorsList.size.toString(),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFFE11D48) // text-rose-600
@@ -929,7 +1048,7 @@ fun HomeScreen(viewModel: BloodViewModel) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "৩৫২+",
+                        text = requestsList.count { it.status == "Completed" }.toString(),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFF334155) // text-slate-700
@@ -1789,7 +1908,22 @@ fun ProfileScreen(viewModel: BloodViewModel) {
                 }
             }
         }
-
+item {
+    OutlinedButton(
+        onClick = {
+            viewModel.setScreen("edit_profile")
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp)
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Icon(Icons.Default.Edit, contentDescription = "Edit")
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("প্রোফাইল সম্পাদনা করুন")
+    }
+}
         // Action: View Certificate
         item {
             Button(
@@ -2164,10 +2298,10 @@ fun ExtraToolsScreen(viewModel: BloodViewModel) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text("যোগাযোগ ও সামাজিক মাধ্যম", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(10.dp))
-                            ContactRow(Icons.Filled.Call, "পরিচালক (হটলাইন)", "01700000001")
-                            ContactRow(Icons.Filled.Chat, "হোয়াটসঅ্যাপ হেল্পলাইন", "01700000001")
-                            ContactRow(Icons.Filled.Email, "অফিসিয়াল জিমেইল", "contact@votmariblood.org")
-                            ContactRow(Icons.Filled.Language, "ওয়েবসাইট লিংক", "www.votmariblood.org")
+                            ContactRow(Icons.Filled.Call, "পরিচালক (হটলাইন)", "01773050197")
+                            ContactRow(Icons.Filled.Chat, "হোয়াটসঅ্যাপ হেল্পলাইন", "01865002060")
+                            ContactRow(Icons.Filled.Email, "অফিসিয়াল জিমেইল", "bhotmaribloodfundetionbbf@gmail.com")
+                            ContactRow(Icons.Filled.Language, "ওয়েবসাইট", "শীঘ্রই যুক্ত করা হবে")
                         }
                     }
                 }
